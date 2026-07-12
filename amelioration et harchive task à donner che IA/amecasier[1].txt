@@ -1,0 +1,253 @@
+État actuel (résumé)
+Zone	État
+Logo entreprise (CompanyLogo)
+Cercle OK, tailles xs–xl (header ≈ 36–40 px)
+Photos entreprise
+Seulement logo dans StoreSettings — pas bâtiment / responsable / photo user register
+Doublons paramètres
+Apparence & Mises à jour : 1ère version dans le formulaire gauche ; doublons droite déjà retirés
+i18n t()
+Remplace {{clé}} mais les textes utilisent {clé} → bug global ({name}, {method} visibles)
+Auth langue
+AuthLanguageSelector : sync ne met pas à jour le pays dans le contexte ; chevron non cliquable (select dans un <button>)
+Forgot password
+Clé → /reset-password ; pas de nouvelle clé à usage unique ; email encore proposé
+Register
+Entreprise + user mélangés ; pas de photo profil user
+Dashboard import/export
+Présent ; pas de toggle pour masquer les raccourcis
+Confirmations dangereuses
+Modale basique ; pas de « taper CONFIRMER » ni « ne plus demander »
+Données test
+Comptes / produits mock dans store.ts / authService
+Bug transversal à traiter en premier (bloquant)
+Phase 0 — Correctif i18n paramètres (~30 min)
+
+Dans t(), supporter {key} et {{key}}.
+Impact immédiat : Recovery-setup ({method}, {name}), tous les confirm.*, logs stock, etc.
+Dépendance : presque toutes les phases « traduction auth » en profitent.
+Phases proposées (ordre + durée + dépendances)
+Phase 1 — UI rapide Paramètres & logo (~2–4 h)
+Peu de risque, visible tout de suite
+
+Logo un peu plus grand (header sm → md, sidebar idem).
+Lightbox au clic (composant ImageLightbox : logo / bâtiment / responsable / profil).
+Emojis → icônes Lucide dans Paramètres :
+Sécurité fichiers, auth, téléchargements, mises à jour
+Thèmes Clair / Sombre / Gris : Sun, Moon, Layers au lieu de ☀️🌙🔲
+Sauvegarde & transfert : toggle « Afficher raccourcis import/export sur le tableau de bord » (settings.showDashboardDataShortcuts).
+Dépendances : aucune (sauf Phase 0 pour libellés toggle FR/EN).
+
+Phase 2 — Modèle de données entreprise & utilisateur (~1–2 jours)
+Fondation pour Register, Paramètres, affichage partout
+
+Étendre StoreSettings + user :
+
+Champ	Usage
+logo
+Logo (existant)
+buildingImage
+Photo du bâtiment
+responsibleImage
+Photo du responsable
+responsibleDisplayName
+Nom visible clients (remplace libellé fixe « Administrateur »)
+publicEmail, publicPhone
+Contact entreprise affiché aux clients
+User : avatar, displayName, recoveryEmail
+Profil + récupération
+Règle : une source unique (STORAGE_KEYS.SETTINGS + users) ; Register écrit tout ; Paramètres / Layout / Receipt / About lisent les mêmes champs.
+
+Dépendances : Phase 3 (Register), Phase 4 (affichage), Phase 6 (recovery infos).
+
+Phase 3 — Register restructuré (~1 jour)
+Dépend de Phase 2
+
+Section Entreprise : nom, logo, photo bâtiment, email/tél publics.
+Section Responsable (compte créateur) : photo profil, nom affiché, email perso, mot de passe, email de récupération (optionnel, pas trivial à deviner).
+Lier le user créé au rôle admin + responsibleDisplayName.
+Traduction page par page : labels, placeholders, boutons, erreurs (clés auth.*, register.*).
+Dépend de : Phase 0 + Phase 2.
+
+Phase 4 — Auth : langue, drapeaux, traductions (~1–2 jours)
+Dépend de Phase 0
+
+Pages : Login, Register, Forgot-password, Reset-password, Recovery-setup, Account-choice.
+
+Tâche	Détail
+Sélecteur pays/langue
+Refonte : pas de <button> autour du <select> ; chevrons décoratifs ou label cliquable ; drapeau sur chaque option pays/langue
+Sync langue
+setLanguage + setCountry dans le contexte sans reload obligatoire ; persistance app_language / settings
+Audit textes
+Remplacer tout texte en dur (Synchroniser la langue, erreurs forgot, etc.) par t('…')
+Placeholders / titres
+Module par module, checklist FR puis EN
+Ordre suggéré : Login → Forgot → Reset → Recovery-setup → Register (si pas fini en Phase 3).
+
+Phase 5 — Recovery-setup correctifs (~0,5 jour)
+Rapide après Phase 0 + 4
+
+{method} / {name} : fixés par Phase 0 ; vérifier user.firstName vs displayName.
+Texte d’aide clé : dossier Téléchargements, USB, usage unique, contact AR Business Digital Solutions.
+Choix emplacement de sauvegarde de la clé (File System Access API où possible, sinon téléchargement classique).
+Phase 6 — Parcours mot de passe oublié / clé (~2–3 jours)
+Gros morceau métier — à faire après modèle clé
+
+Flux cible :
+
+Forgot-password (clé uniquement en priorité)
+  → validation clé (usage unique)
+  → génération nouvelle clé + écrasement ancienne
+  → page Change-password / Change-account-info (pas login direct)
+  → puis Login
+Règle	Implémentation
+Clé à usage unique
+Marquer clé consommée dans settings / user ; nouvelle clé après succès
+Pas de réutilisation
+Même clé refusée après 1er reset
+Reset = mot de passe + infos optionnelles
+Email récupération, nom affiché, etc.
+Email forgot
+Retirer ou désactiver jusqu’à évolution Google
+Dépend de : Phase 2, Phase 5.
+Hors scope v1 : clé super-admin universelle, clés employé multi-casiers (noter en Phase 10).
+
+Phase 7 — Système de confirmation « intelligent » (~1–2 jours)
+Réutilisable partout
+
+Composant ConfirmActionModal :
+
+Niveau 1 : Annuler / Confirmer
+Niveau 2 (actions sensibles) : saisir CONFIRMER ou le nom de l’action
+Option : « Ne plus demander pour cette action » (par actionId dans localStorage)
+Paramètres : section « Confirmations » — activer/désactiver globalement ou par type
+Appliquer d’abord à : reset données, import JSON, gestion modules, suppression.
+
+Dépend de : rien (peut commencer après Phase 1).
+
+Phase 8 — Gestion des modules (~1 jour)
+Dépend de Phase 7
+
+Section Paramètres « Gestion des modules ».
+Liste des routes (constants.getNavigationItems) avec switch actif/inactif.
+Persistance settings.disabledModules[].
+Layout filtre la nav ; confirmation + explication avant désactivation.
+Phase 9 — Uniformisation données dans l’app (~2–3 jours)
+Après Phase 2–3
+
+Passer module par module pour lire settings / user unifiés :
+
+Layout, Receipt, About, Clients (contact entreprise), Users, NewSale, Products (optionnel vignette entreprise).
+Remplacer adminName / textes en dur par responsibleDisplayName ou t('role.admin').
+Phase 10 — Sécurité avancée (plus tard)
+Ne pas mélanger avec le reste
+
+Clé fondateur (hors UI, hors repo).
+Compte super-admin avec étapes renforcées.
+Clés employé « une fois par casier ».
+Suppression comptes/produits de test en fin de projet.
+Matrice priorité / effort
+Impact utilisateur
+     ▲
+     │  P0 i18n params ●
+     │  P1 logo/lightbox/emojis/toggle dashboard ●
+     │  P4 auth traductions ●●●
+     │  P5 recovery-setup fixes ●
+     │  P2–3 données + register ●●
+     │  P6 forgot/recovery flow ●●●
+     │  P7–8 confirmations + modules ●●
+     │  P9 uniformisation ●●
+     │  P10 super-admin / clés pro ●●●●
+     └──────────────────────────────► Effort / temps
+● = rapide · ●● = moyen · ●●● = long
+
+Ordre d’exécution recommandé
+Étape	Phase	Pourquoi
+1
+0
+Débloque traductions et Recovery
+2
+1
+Demandes UI immédiates (logo, emojis, toggle dashboard)
+3
+7 (léger)
+Confirmations avant import JSON / modules
+4
+2 + 3
+Register + champs photos
+5
+4 + 5
+Auth FR/EN + recovery-setup
+6
+6
+Flux clé / reset-password
+7
+8
+Modules on/off
+8
+9
+Données partout
+9
+10
+Quand produit stable
+Ce qu’on peut faire en parallèle
+Phase 0 + 1 : une seule session.
+Phase 7 en parallèle de Phase 2 (fichiers différents).
+Phase 4 (traductions auth) page par page pendant Phase 3.
+Proposition pour la prochaine session
+Démarrer par Phase 0 + Phase 1 (≈ demi-journée) :
+
+Fix t() pour {param}
+Logo plus grand + lightbox au clic
+Emojis → icônes dans Paramètres
+Toggle raccourcis dashboard dans « Sauvegarde & transfert »
+Ensuite tu testes, et on enchaîne Phase 2–3 (Register + photos) ou Phase 4 (auth FR/EN) selon ce que tu préfères en priorité.
+
+
+
+Phase 0 — i18n params (reste)
+
+Action: vérifier que t() couvre {key} et {{key}} partout; ajouter tests rapides pour Recovery/Confirm.
+Fichiers ciblés: i18n.ts, pages auth.
+Phase 1 — UI rapide (reste partiel)
+
+Logo / lightbox: consolider CompanyLogo.tsx (taille header/sidebar, lightbox pour logo/building/responsible/profile).
+Toggle dashboard shortcuts: exposer settings.showDashboardShortcuts UI + traduction.
+Emojis → Lucide: remplacer emojis visibles (ex. TouchScreenDiagnosticsPage.tsx, PermissionsTestPage.tsx, StorageSetupPage.tsx).
+Phase 2 — Modèle données entreprise & user (pendant)
+
+Action: ajouter buildingImage, responsibleImage, responsibleDisplayName, publicEmail/publicPhone à StoreSettings + persistance.
+Dépendances: nécessaire pour Register complet et affichages (Receipt, About, Layout).
+Phase 3 — Register restructuré
+
+Action: séparer sections Entreprise / Responsable ; inclure photos (avatar, building), recoveryEmail.
+Tâches: adapter RegisterPage.tsx et écrire mapping stable d'erreurs -> auth.* clés.
+Phase 4 — Auth : langue & traductions
+
+Action: refondre AuthLanguageSelector (pas de <button> autour du <select>), garantir setLanguage/setCountry sans reload, remplacer textes durs par t(...) page par page (ordre: Login → Forgot → Reset → Recovery → Register).
+Phase 5 — Recovery-setup fixes
+
+Action: valider affichage {method} / {name}, améliorer aide (où sauvegarder la clé), proposer sauvegarde via File System API si possible.
+Phase 6 — Parcours forgot/reset (métier)
+
+Action: implémenter clé à usage unique, marquer consommée, génération nouvelle clé, page de changement mot de passe séparée.
+Dépendances: Phase 2 + Phase 5.
+Phase 7 — ConfirmActionModal « intelligent »
+
+Action: support niveau2 (saisir CONFIRMER) + option « ne plus demander » par actionId.
+Appliquer à: import JSON, reset, suppression modules, etc.
+Phase 8 — Gestion modules
+
+Action: UI pour activer/désactiver routes, persistance disabledModules, Layout filtre nav.
+Phase 9 — Uniformisation affichages
+
+Action: remplacer usages ad-hoc (adminName, textes durs) par settings/user unifiés et t(...).
+Phase 10 — Sécurité avancée (long terme)
+
+Tâches immédiates que je propose d’exécuter maintenant (choisir)
+
+Étendre les clés i18n manquantes (auth.*) et vérifier t() (Phase 0).
+Remplacer emojis critiques par lucide-react (Phase 1 minimal).
+Compléter la normalisation des erreurs auth (Register/Forgot/Reset/Recovery) pour retourner systématiquement auth.* (on a commencé ce travail).
+Lancer un parcours manuel Register → Login → Recovery en local et rapporter erreurs console (je peux exécuter et capturer).

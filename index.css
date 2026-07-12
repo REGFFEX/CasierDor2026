@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Thème clair (par défaut) */
+  :root {
+    color-scheme: light;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --border-color: #e5e7eb;
+  }
+
+  /* Thème sombre */
+  :root.dark {
+    color-scheme: dark;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border-color: #475569;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+  }
+}
+
+/* Masquer la scrollbar sur les éléments avec scrollbar-hide */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Couleurs sombres pour éléments spécifiques */
+:root.dark {
+  --color-border-dark: #334155;
+}
+
+@layer components {
+  /* Thème sombre pour boîtes */
+  :root.dark .bg-white {
+    @apply bg-slate-900 text-slate-100;
+  }
+
+  :root.dark .bg-gray-50 {
+    @apply bg-slate-800 text-slate-100;
+  }
+
+  :root.dark .bg-gray-100 {
+    @apply bg-slate-700 text-slate-100;
+  }
+
+  :root.dark .border-gray-200 {
+    @apply border-slate-700;
+  }
+
+  :root.dark .border-gray-100 {
+    @apply border-slate-800;
+  }
+
+  :root.dark .text-gray-900 {
+    @apply text-slate-100;
+  }
+
+  :root.dark .text-gray-700 {
+    @apply text-slate-300;
+  }
+
+  :root.dark .text-gray-600 {
+    @apply text-slate-400;
+  }
+
+  :root.dark .text-gray-500 {
+    @apply text-slate-500;
+  }
+
+  :root.dark .text-gray-400 {
+    @apply text-slate-600;
+  }
+
+  /* Inputs sombres */
+  :root.dark input,
+  :root.dark select,
+  :root.dark textarea {
+    @apply bg-slate-800 text-slate-100 border-slate-700;
+  }
+
+  :root.dark input::placeholder,
+  :root.dark textarea::placeholder {
+    @apply text-slate-500;
+  }
+
+  :root.dark input:focus,
+  :root.dark select:focus,
+  :root.dark textarea:focus {
+    @apply border-blue-500 ring-blue-500;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+}
