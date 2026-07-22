@@ -80,3 +80,5 @@ ios/App/build/
 *.bak
 *.backup
 *.backup*
+
+/doc2026/*
