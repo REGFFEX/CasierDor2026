@@ -21,6 +21,7 @@ import {
 } from '../types';
 import { hashPassword, verifyPassword, upgradePasswordHashIfLegacy } from './cryptoVault';
 import { activateStorageForUser, clearActiveStorageScope } from './accountStorage';
+import { supabase } from './supabaseClient';
 
 // Simuler une base de données locale (en production, utiliser une vraie BDD)
 class LocalDatabase {
@@ -346,7 +347,71 @@ export class AuthService {
   // Connexion
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const user = this.db.findUserByEmail(credentials.email);
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      let user: User | null = null;
+
+      if (supabaseUrl && supabaseAnonKey) {
+        try {
+          const { data: sbUser, error: sbError } = await supabase
+            .from('User')
+            .select('*')
+            .eq('email', credentials.email.toLowerCase().trim())
+            .maybeSingle();
+
+          if (sbUser && !sbError) {
+            const valid = await this.db.verifyPassword(credentials.password, sbUser.passwordHash);
+            if (valid) {
+              user = {
+                id: sbUser.id,
+                storageAccountId: sbUser.storageAccountId || sbUser.id,
+                uniqueId: `USR-${sbUser.id.slice(-4)}`,
+                name: sbUser.displayName || sbUser.email,
+                firstName: sbUser.displayName?.split(' ')[0] || '',
+                lastName: sbUser.displayName?.split(' ')[1] || '',
+                email: sbUser.email,
+                password: sbUser.passwordHash,
+                role: sbUser.role || UserRole.STAFF,
+                active: true,
+                permissions: sbUser.role === UserRole.ADMIN ? Object.values(Permission) : [Permission.VIEW_DASHBOARD, Permission.VIEW_SALES],
+                isOnline: true,
+                createdAt: new Date(sbUser.createdAt || Date.now()).getTime(),
+                updatedAt: new Date(sbUser.updatedAt || Date.now()).getTime(),
+                preferences: { ...DEFAULT_USER_PREFERENCES }
+              };
+              
+              // Mettre à jour la base locale pour rester en phase
+              const localUser = this.db.findUserByEmail(credentials.email);
+              if (!localUser) {
+                // Ajouter à la base locale si absent
+                this.db.syncTestAccounts(); // s'assurer d'initialiser d'abord
+                this.db.createUser({
+                  firstName: user.firstName || 'User',
+                  lastName: user.lastName || 'Sync',
+                  email: user.email,
+                  password: credentials.password,
+                  confirmPassword: credentials.password,
+                  companyName: 'Établissement Sync',
+                  acceptTerms: true
+                });
+              } else {
+                this.db.updateUser(localUser.id, {
+                  password: sbUser.passwordHash,
+                  displayName: sbUser.displayName,
+                  role: sbUser.role
+                });
+              }
+            }
+          }
+        } catch (supabaseErr) {
+          console.warn('[AuthService] Échec récupération Supabase lors de la connexion, repli local:', supabaseErr);
+        }
+      }
+
+      if (!user) {
+        user = this.db.findUserByEmail(credentials.email);
+      }
 
       if (!user) {
         return {
@@ -426,7 +491,7 @@ export class AuthService {
         };
       }
 
-      // Vérifier si l'email existe déjà
+      // Vérifier si l'email existe déjà localement
       const existingUser = this.db.findUserByEmail(data.email);
       if (existingUser) {
         return {
@@ -435,8 +500,62 @@ export class AuthService {
         };
       }
 
-      // Créer l'utilisateur
+      // Créer l'utilisateur localement
       const newUser = await this.db.createUser(data);
+
+      // Essayer de synchroniser avec Supabase
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      if (supabaseUrl && supabaseAnonKey) {
+        try {
+          // Générateur UUID compatible HTTP non sécurisé (IP locales)
+          const tenantId = typeof crypto !== 'undefined' && crypto.randomUUID 
+            ? crypto.randomUUID() 
+            : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                const r = (Math.random() * 16) | 0;
+                const v = c === 'x' ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              });
+          
+          // 1. Créer le Tenant dans Supabase
+          const { error: tenantError } = await supabase
+            .from('Tenant')
+            .insert({
+              id: tenantId,
+              name: data.companyName || "Établissement",
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+
+          if (tenantError) {
+            console.error('[AuthService] Erreur création Tenant Supabase:', tenantError);
+          } else {
+            // 2. Créer l'Utilisateur dans Supabase
+            const { error: userError } = await supabase
+              .from('User')
+              .insert({
+                id: newUser.id,
+                tenantId: tenantId,
+                email: newUser.email,
+                passwordHash: newUser.password,
+                role: newUser.role,
+                displayName: newUser.displayName || '',
+                storageAccountId: newUser.storageAccountId || '',
+                createdAt: new Date(newUser.createdAt).toISOString(),
+                updatedAt: new Date(newUser.updatedAt).toISOString()
+              });
+
+            if (userError) {
+              console.error('[AuthService] Erreur création Utilisateur Supabase:', userError);
+            } else {
+              console.log('[AuthService] Compte synchronisé avec Supabase avec succès.');
+            }
+          }
+        } catch (supabaseErr) {
+          console.warn('[AuthService] Échec de la connexion Supabase lors de l\'inscription:', supabaseErr);
+        }
+      }
 
       this.saveCurrentUser(newUser);
       activateStorageForUser(newUser);

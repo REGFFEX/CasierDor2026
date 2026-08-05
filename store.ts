@@ -142,7 +142,7 @@ export const addActivity = (activity: Omit<Activity, 'id' | 'timestamp'>) => {
   const activities = getStoreData<Activity[]>(STORAGE_KEYS.ACTIVITIES, []);
   const newActivity: Activity = {
     ...activity,
-    id: Math.random().toString(36).substr(2, 9),
+    id: crypto.randomUUID(),
     timestamp: Date.now()
   };
 
@@ -161,7 +161,7 @@ export const moveToTrash = (item: any, module: TrashItem['module']) => {
   const expiresAt = Date.now() + (settings.trashRetentionDays * 24 * 60 * 60 * 1000);
 
   const newItem: TrashItem = {
-    id: Math.random().toString(36).substr(2, 9),
+    id: crypto.randomUUID(),
     originalId: item.id,
     module,
     data: { ...item, active: false, deletedAt: Date.now() },

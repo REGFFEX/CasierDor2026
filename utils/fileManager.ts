@@ -227,18 +227,22 @@ export const printContent = async (
           return;
         }
 
+        // Copier les feuilles de styles existantes pour préserver le rendu Tailwind
+        const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+          .map(tag => tag.outerHTML)
+          .join('\n');
+
         // Préparer le document
         printWindow.document.write(`
           <!DOCTYPE html>
           <html>
             <head>
               <title>${title}</title>
+              ${styleTags}
               <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Inter', Arial, sans-serif; padding: 20px; }
                 @media print {
                   .no-print { display: none !important; }
-                  body { margin: 0; padding: 0; }
+                  body { background: transparent !important; }
                 }
               </style>
             </head>

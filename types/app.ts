@@ -242,6 +242,7 @@ export interface StoreSettings {
   country?: string;
   language?: string;
   recoveryConfig?: RecoveryConfig;
+  receiptTemplate?: 'pro_color' | 'pro_bw' | 'thermal_pro';
   updatedAt?: number;
 }
 

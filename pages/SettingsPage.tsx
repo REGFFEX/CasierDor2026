@@ -26,6 +26,13 @@ import ConfirmActionModal from '../components/ConfirmActionModal';
 import { useConfirmAction } from '../hooks/useConfirmAction';
 import { scopeStorageKey } from '../utils/accountStorage';
 import { runFullTestDataCleanup } from '../utils/testDataCleanup';
+import GeneralInfoSection from './settings/components/GeneralInfoSection';
+import LogoSection from './settings/components/LogoSection';
+import RoleSection from './settings/components/RoleSection';
+import LanguageSettings from './settings/components/LanguageSettings';
+import AppearanceSettings from './settings/components/AppearanceSettings';
+import AuditSettings from './settings/components/AuditSettings';
+import ReceiptSettings from './settings/components/ReceiptSettings';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -253,7 +260,7 @@ const SettingsPage: React.FC = () => {
         return;
       }
 
-      if (confirm(t('settings.restoreWarning'))) {
+      if (window.confirm(t('settings.restoreWarning'))) {
         Object.entries(content).forEach(([key, value]) => {
           if (value) {
             localStorage.setItem(key, JSON.stringify(value));
@@ -492,596 +499,30 @@ const SettingsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
         <div className="xl:col-span-2">
-          <form onSubmit={handleSave} className="bg-white p-4 sm:p-6 lg:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 lg:space-y-8">
-            <button
-              type="button"
-              onClick={() => setShowGeneralSection(!showGeneralSection)}
-              className="w-full flex items-center justify-between hover:bg-gray-50 p-2 rounded-xl transition-all"
-            >
-              <div className="flex items-center space-x-3">
-                <Building className="w-5 h-5 text-blue-600" />
-                <div className="text-left">
-                  <p className="text-sm font-bold text-gray-900 uppercase tracking-tighter">{t('settings.generalInfo')}</p>
-                  <p className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase">{t('settings.generalInfoDesc')}</p>
-                </div>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-blue-600 transition-transform duration-300 ${showGeneralSection ? 'rotate-180' : ''}`} />
-            </button>
+          <form onSubmit={handleSave} className="space-y-6">
+            <GeneralInfoSection settings={settings} onChange={setSettings} />
 
-            {showGeneralSection && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-                  <div className="space-y-1">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <Building className="w-3 h-3 mr-1" /> {t('settings.storeName')}
-                    </label>
-                    <input required className="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" value={settings.name} onChange={e => setSettings({ ...settings, name: e.target.value })} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <BadgeDollarSign className="w-3 h-3 mr-1" /> {t('settings.currency')}
-                    </label>
-                    <select required className="w-full px-3 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" value={settings.currency} onChange={e => setSettings({ ...settings, currency: e.target.value })}>
-                      <option value="">{t('form.select')}</option>
-                      <option value="XAF">FCFA</option>
-                      <option value="EUR">Euro €</option>
-                      <option value="USD">Dollar $</option>
-                      <option value="GBP">Livre £</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <Building className="w-3 h-3 mr-1" /> {t('settings.businessTypeLabel')}
-                    </label>
-                    <select
-                      className="w-full px-3 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                      value={settings.businessType || ''}
-                      onChange={e => setSettings({ ...settings, businessType: e.target.value })}
-                    >
-                      <option value="">{t('settings.activityType')}</option>
-                      <option value="Dépôt de Boisson">{t('settings.activityDepot')}</option>
-                      <option value="Restaurant">{t('settings.activityRestaurant')}</option>
-                      <option value="Boutique">{t('settings.activityShop')}</option>
-                      <option value="Bar">{t('settings.activityBar')}</option>
-                      <option value="Autre">{t('settings.activityOther')}</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <Phone className="w-3 h-3 mr-1" /> {t('settings.publicPhone')}
-                    </label>
-                    <PhoneInput
-                      value={settings.publicPhone ?? settings.phone ?? ''}
-                      dialCode={phoneDialCode}
-                      onChange={(v) => setSettings({ ...settings, publicPhone: v, phone: v })}
-                      onDialCodeChange={setPhoneDialCode}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <Mail className="w-3 h-3 mr-1" /> {t('settings.publicEmail')}
-                    </label>
-                    <input className="w-full px-3 py-3 bg-gray-50 border rounded-xl outline-none text-sm" value={settings.publicEmail ?? settings.email ?? ''} onChange={e => setSettings({ ...settings, publicEmail: e.target.value, email: e.target.value })} />
-                  </div>
-                </div>
+            <LogoSection settings={settings} onChange={setSettings} />
 
-                <div className="space-y-1">
-                  <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                    <MapPin className="w-3 h-3 mr-1" /> {t('settings.address')}
-                  </label>
-                  <input className="w-full px-3 py-3 bg-gray-50 border rounded-xl outline-none text-sm" value={settings.address} onChange={e => setSettings({ ...settings, address: e.target.value })} />
-                </div>
+            <RoleSection settings={settings} onChange={setSettings} />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <Building className="w-3 h-3 mr-1" /> {t('settings.enterpriseTypeLabel')}
-                    </label>
-                    <div className="relative">
-                      <input
-                        className="w-full px-3 py-3 bg-gray-100 border border-transparent rounded-xl outline-none text-sm text-gray-500 cursor-not-allowed"
-                        value={settings.enterpriseType ? t(`enterprise.${settings.enterpriseType}`) : t('settings.notDefined')}
-                        readOnly
-                      />
-                      <Lock className="absolute right-3 top-3.5 w-4 h-4 text-gray-400" />
-                    </div>
-                  </div>
+            <ReceiptSettings settings={settings} onChange={setSettings} />
 
-                  <div className="space-y-1">
-                    <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                      <Briefcase className="w-3 h-3 mr-1" /> {t('settings.activityTypeLabel')}
-                    </label>
-                    <div className="relative">
-                      <input
-                        className="w-full px-3 py-3 bg-gray-100 border border-transparent rounded-xl outline-none text-sm text-gray-500 cursor-not-allowed"
-                        value={settings.businessType || t('settings.notDefined')}
-                        readOnly
-                      />
-                      <Lock className="absolute right-3 top-3.5 w-4 h-4 text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const mainSettingsElement = document.getElementById('main-settings');
-                      if (mainSettingsElement) mainSettingsElement.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                  >
-                    <Settings2 className="w-3 h-3" />
-                    {t('settings.modify')}
-                  </button>
-                </div>
-              </div>
+            {isAdmin && (
+              <SettingsModuleManager settings={settings} onChange={setSettings} />
             )}
 
-            {/* Logo Section */}
-            <div className="pt-6 border-t">
-              <button
-                type="button"
-                onClick={() => setShowLogoSection(!showLogoSection)}
-                className="w-full flex items-center justify-between hover:bg-gray-50 p-3 rounded-lg transition-all"
-              >
-                <div className="flex items-center space-x-3">
-                  <Image className="w-5 h-5 text-amber-600" />
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-gray-900 uppercase tracking-tighter">{t('settings.logoLabel')}</p>
-                    <p className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase">{t('settings.logoDesc')}</p>
-                  </div>
-                </div>
-                <ChevronDown className={`w-5 h-5 text-amber-600 transition-transform duration-300 ${showLogoSection ? 'rotate-180' : ''}`} />
-              </button>
+            {isAdmin && (
+              <LanguageSettings />
+            )}
 
-              {showLogoSection && (
-                <div className="pt-6 space-y-6 animate-in fade-in slide-in-from-top-2">
-                  <div className="space-y-3">
-                    {settings.logo ? (
-                      <div className="relative bg-gray-50 border-2 border-dashed border-amber-300 rounded-3xl p-6 flex flex-col items-center justify-center space-y-3">
-                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-xl mx-auto">
-                          <img src={settings.logo} alt="Logo" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold text-gray-900">{t('settings.currentLogo')}</p>
-                          <p className="text-xs text-gray-500">{settings.logoFileName}</p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <button
-                            type="button"
-                            onClick={() => logoInputRef.current?.click()}
-                            className="flex-1 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-all text-sm"
-                          >
-                            {t('settings.changeLogo')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleRemoveLogo}
-                            className="flex-1 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-600 font-bold rounded-lg transition-all text-sm flex items-center justify-center space-x-1"
-                          >
-                            <X className="w-4 h-4" />
-                            <span>{t('settings.removeLogo')}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => logoInputRef.current?.click()}
-                        className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center space-y-3 cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-colors"
-                      >
-                        <Image className="w-12 h-12 text-gray-300" />
-                        <div className="text-center">
-                          <p className="text-sm font-bold text-gray-600">{t('settings.noLogoTitle')}</p>
-                          <p className="text-xs text-gray-500">{t('settings.noLogoDesc')}</p>
-                        </div>
-                      </div>
-                    )}
+            {isAdmin && (
+              <AppearanceSettings />
+            )}
 
-                    <input
-                      type="file"
-                      ref={logoInputRef}
-                      onChange={handleLogoUpload}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-6 border-t space-y-6">
-              {/* Rôle Utilisateur-Role Card Selector */}
-              <div className="space-y-4">
-                <button
-                  type="button"
-                  onClick={() => setShowRoleSection(!showRoleSection)}
-                  className="w-full flex items-center justify-between hover:bg-gray-50 p-3 rounded-lg transition-all"
-                >
-                  <div className="flex items-center space-x-3">
-                    <UserCog className="w-5 h-5 text-purple-600" />
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-gray-900 uppercase tracking-tighter">{t('settings.rolePermissions')}</p>
-                      <p className="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase">{t('settings.accessConfiguration')}</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-5 h-5 text-purple-600 transition-transform duration-300 ${showRoleSection ? 'rotate-180' : ''}`} />
-                </button>
-
-                {showRoleSection && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                    {/* Admin Role Card */}
-                    <div
-                      onClick={() => setSettings({ ...settings, userRole: UserRole.ADMIN })}
-                      className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${settings.userRole === UserRole.ADMIN
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20 shadow-lg shadow-purple-200 dark:shadow-purple-900'
-                        : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-purple-300 dark:hover:border-purple-700'
-                        } `}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${settings.userRole === UserRole.ADMIN
-                            ? 'bg-purple-200 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
-                            : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300'
-                            } `}>
-                            <Shield className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase">{t('user.admin')}</p>
-                            <p className="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400">{t('settings.adminDesc')}</p>
-                          </div>
-                        </div>
-                        {settings.userRole === UserRole.ADMIN && (
-                          <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">✓</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-                        <div className="space-y-1">
-                          <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase">{t('settings.responsibleName')}</label>
-                          <input
-                            type="text"
-                            placeholder={t('settings.adminRolePlaceholder')}
-                            value={settings.responsibleDisplayName ?? settings.adminName ?? ''}
-                            onChange={(e) => setSettings({ ...settings, responsibleDisplayName: e.target.value, adminName: e.target.value })}
-                            className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-700 border dark:border-slate-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
-                        <ul className="text-[8px] sm:text-[10px] space-y-1 text-gray-600 dark:text-gray-300">
-                          <li>{t('settings.permDataExport')}</li>
-                          <li>{t('settings.permDataDeletion')}</li>
-                          <li>{t('settings.permSystemConfig')}</li>
-                          <li>{t('settings.permManagePermissions')}</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Staff Role Card */}
-                    <div
-                      onClick={() => setSettings({ ...settings, userRole: UserRole.STAFF })}
-                      className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${settings.userRole === UserRole.STAFF
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-lg shadow-blue-200 dark:shadow-blue-900'
-                        : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-700'
-                        } `}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${settings.userRole === UserRole.STAFF
-                            ? 'bg-blue-200 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                            : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300'
-                            } `}>
-                            <Users className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase">{t('user.staff')}</p>
-                            <p className="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400">{t('settings.staffDesc')}</p>
-                          </div>
-                        </div>
-                        {settings.userRole === UserRole.STAFF && (
-                          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">✓</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-                        <div className="space-y-1">
-                          <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase">{t('settings.accessName')}</label>
-                          <input
-                            type="text"
-                            placeholder={t('settings.staffRolePlaceholder')}
-                            value={settings.staffName || ''}
-                            onChange={(e) => setSettings({ ...settings, staffName: e.target.value })}
-                            className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-700 border dark:border-slate-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <ul className="text-[8px] sm:text-[10px] space-y-1 text-gray-600 dark:text-gray-300">
-                          <li>{t('settings.permViewSales')}</li>
-                          <li>{t('settings.permViewStock')}</li>
-                          <li>{t('settings.permNoModification')}</li>
-                          <li>{t('settings.permNoExport')}</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {isAdmin && (
-                <SettingsModuleManager settings={settings} onChange={setSettings} />
-              )}
-
-              {/* Sélecteur de Langue & Pays-Admin Only */}
-              {isAdmin && (
-                <div className="pt-6 border-t space-y-6">
-                  {/* En-tête avec bouton de plier/déplier */}
-                  <button
-                    onClick={() => setShowLanguageSection(!showLanguageSection)}
-                    className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700/50 p-3 rounded-lg transition-all"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Globe className="w-5 h-5 text-blue-600" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-gray-900 uppercase tracking-tighter">{t('settings.languageTranslation')}</p>
-                        <p className="text-[8px] sm:text-[10px] text-gray-400">{t('settings.languageDesc')}</p>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={`w-5 h-5 text-blue-600 transition-transform duration-300 ${showLanguageSection ? 'rotate-180' : ''
-                        } `}
-                    />
-                  </button>
-
-                  {/* Contenu pliable/dépliable */}
-                  {showLanguageSection && (
-                    <div className="space-y-6 pt-4 border-t dark:border-slate-700">
-                      {/* Sélecteur de Pays */}
-                      <div className="space-y-3">
-                        <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase">{t('settings.country')}</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {SUPPORTED_COUNTRIES.map((c) => (
-                            <button
-                              key={c.code}
-                              onClick={() => {
-                                setCountry(c.code);
-                                // Si la langue actuelle n'est pas disponible pour ce pays, changer la langue
-                                if (!c.languages.includes(language)) {
-                                  setLanguage(c.languages[0]);
-                                }
-                              }}
-                              className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center space-y-1 text-center min-w-0 ${country === c.code
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-md shadow-blue-200'
-                                : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300'
-                                } `}
-                            >
-                              <span className="text-xl">{c.flag}</span>
-                              <p className="text-[8px] font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">{c.name}</p>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Sélecteur de Langue (filtrée par pays) */}
-                      <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-                        <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase">Langue</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {SUPPORTED_LANGUAGES.filter((lang) => {
-                            const countryConfig = SUPPORTED_COUNTRIES.find(c => c.code === country);
-                            return countryConfig?.languages.includes(lang.code);
-                          }).map((lang) => (
-                            <button
-                              key={lang.code}
-                              onClick={() => setLanguage(lang.code as any)}
-                              className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center space-y-2 min-w-0 ${language === lang.code
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-lg shadow-blue-200'
-                                : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300'
-                                } `}
-                            >
-                              <span className="text-2xl">{lang.flag}</span>
-                              <p className="text-xs font-black text-gray-900 dark:text-gray-100 uppercase truncate w-full tracking-tighter">{lang.name}</p>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Thème et Fond d'écran-Admin Only */}
-              {isAdmin && (
-                <div className="pt-6 border-t space-y-6">
-                  {/* En-tête avec bouton de plier/déplier */}
-                  <button
-                    onClick={() => setShowAppearanceSection(!showAppearanceSection)}
-                    className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700/50 p-3 rounded-lg transition-all"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Palette className="w-5 h-5 text-pink-600" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-gray-900 uppercase tracking-tighter">{t('settings.appearance')}</p>
-                        <p className="text-[8px] sm:text-[10px] text-gray-400">{t('settings.appearanceDesc')}</p>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={`w-5 h-5 text-pink-600 transition-transform duration-300 ${showAppearanceSection ? 'rotate-180' : ''
-                        } `}
-                    />
-                  </button>
-
-                  {/* Contenu pliable/dépliable */}
-                  {showAppearanceSection && (
-                    <div className="space-y-6 pt-4 border-t dark:border-slate-700">
-                      {/* Sélecteur de Thème */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {[
-                          { id: 'light', label: 'Clair', icon: '☀️', desc: 'Blanc/Bleu' },
-                          { id: 'dark', label: 'Sombre', icon: '🌙', desc: 'Noir/Gris' },
-                          { id: 'gray', label: 'Gris', icon: '🔲', desc: 'Pâle/Eco' }
-                        ].map(t => (
-                          <button
-                            key={t.id}
-                            onClick={() => toggleTheme()}
-                            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center space-y-2 min-w-0 ${theme === t.id
-                              ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/20 shadow-lg shadow-pink-200'
-                              : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-pink-300'
-                              } `}
-                          >
-                            <span className="text-2xl">{t.icon}</span>
-                            <p className="text-xs font-black text-gray-900 dark:text-gray-100 uppercase">{t.label}</p>
-                            <p className="text-[9px] text-gray-500 dark:text-gray-400 truncate w-full">{t.desc}</p>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Couleur de Fond */}
-                      <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-                        <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                          <Palette className="w-3 h-3 mr-2" /> Couleur de Fond
-                        </label>
-                        {/* Container avec scroll horizontal LIMITÉ */}
-                        <div className="overflow-x-auto max-w-full">
-                          <div className="flex gap-2 items-center min-w-min pb-2">
-                            <input
-                              type="color"
-                              value={bgColor}
-                              onChange={(e) => setBgColor(e.target.value)}
-                              className="w-16 h-10 rounded-lg cursor-pointer border border-gray-300 dark:border-slate-600 flex-shrink-0"
-                            />
-                            <input
-                              type="text"
-                              value={bgColor}
-                              onChange={(e) => setBgColor(e.target.value)}
-                              className="w-32 px-3 py-2 bg-gray-50 dark:bg-slate-700 border dark:border-slate-600 rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-pink-500 flex-shrink-0"
-                              placeholder="#FFFFFF"
-                            />
-                            <button
-                              onClick={() => setBgColor('#FFFFFF')}
-                              className="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-xs font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 whitespace-nowrap flex-shrink-0 transition-all"
-                            >
-                              Réinitialiser
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Image de Fond */}
-                      <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-                        <label className="text-[8px] sm:text-[10px] font-bold text-gray-400 uppercase flex items-center">
-                          <Image className="w-3 h-3 mr-2" /> Image de Fond (Max 8MB)
-                        </label>
-                        {bgImage && (
-                          <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600">
-                            <img src={bgImage} alt="Fond" className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => setBgImage(null)}
-                              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-lg hover:bg-red-600"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => bgImageInputRef.current?.click()}
-                          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg hover:border-pink-500 transition-all flex items-center justify-center space-x-2 text-sm font-bold text-gray-600 dark:text-gray-300"
-                        >
-                          <Image className="w-4 h-4" />
-                          <span>{bgImage ? 'Changer l\'image' : 'Ajouter une image'}</span>
-                        </button>
-                        <input
-                          ref={bgImageInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              // Vérifier la taille max (8MB = 8388608 bytes)
-                              const MAX_SIZE = 8 * 1024 * 1024;
-                              if (file.size > MAX_SIZE) {
-                                alert(`L'image doit faire moins de 8MB. Taille actuelle: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-                                return;
-                              }
-                              try {
-                                const reader = new FileReader();
-                                reader.onload = (event) => {
-                                  const result = event.target?.result as string;
-                                  setBgImage(result);
-                                };
-                                reader.readAsDataURL(file);
-                              } catch (error) {
-                                alert(t('settings.imageLoadError'));
-                              }
-                            }
-                          }}
-                          className="hidden"
-                        />
-                        <p className="text-[9px] text-gray-400">Formats: JPG, PNG, WebP | Max 8MB</p>
-                      </div >
-                    </div >
-                  )}
-                </div >
-              )}
-
-              {/* Section Audit et Corbeille */}
-              {isAdmin && (
-                <div className="pt-6 border-t space-y-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowAuditSection(!showAuditSection)}
-                    className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700/50 p-3 rounded-lg transition-all"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Database className="w-5 h-5 text-indigo-600" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-gray-900 uppercase tracking-tighter">Audit & Corbeille</p>
-                        <p className="text-[8px] sm:text-[10px] text-gray-400">{t('settings.auditDescription')}</p>
-                      </div>
-                    </div>
-                    <ChevronDown className={`w-5 h-5 text-indigo-600 transition-transform duration-300 ${showAuditSection ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {showAuditSection && (
-                    <div className="space-y-6 pt-4 border-t dark:border-slate-700 animate-in fade-in slide-in-from-top-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1.5">
-                            <Trash2 className="w-3.5 h-3.5" /> Rétention Corbeille (Jours)
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            max="365"
-                            value={settings.trashRetentionDays}
-                            onChange={e => setSettings({ ...settings, trashRetentionDays: parseInt(e.target.value) || 30 })}
-                            className="w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                          />
-                          <p className="text-[9px] text-gray-400 italic">Nombre de jours avant suppression définitive automatique.</p>
-                        </div>
-                        <div className="space-y-2 flex flex-col justify-center">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" /> Log d'Activités
-                          </label>
-                          <div className="flex items-center gap-3 py-2">
-                            <button
-                              type="button"
-                              onClick={() => setSettings({ ...settings, enableActivityLogging: !settings.enableActivityLogging })}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.enableActivityLogging ? 'bg-indigo-600' : 'bg-gray-200'}`}
-                            >
-                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.enableActivityLogging ? 'translate-x-6' : 'translate-x-1'}`} />
-                            </button>
-                            <span className="text-xs font-bold text-gray-700">
-                              {settings.enableActivityLogging ? 'Activé' : 'Désactivé'}
-                            </span>
-                          </div>
-                          <p className="text-[9px] text-gray-400 italic">Enregistre les créations, modifications et suppressions.</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+            {isAdmin && (
+              <AuditSettings settings={settings} onChange={setSettings} />
+            )}
 
               {/* Sections pliables et Actions finales */}
               <div className="space-y-6">
@@ -1580,7 +1021,6 @@ const SettingsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-            </div>
           </form>
         </div>
 
@@ -1695,7 +1135,7 @@ const SettingsPage: React.FC = () => {
 
                   <button
                     onClick={() => {
-                      if (confirm('Voulez-vous sauvegarder les données avant de vous déconnecter?\n\nCela créera une sauvegarde complète et vous redirigera vers la page de connexion.')) {
+                      if (window.confirm('Voulez-vous sauvegarder les données avant de vous déconnecter?\n\nCela créera une sauvegarde complète et vous redirigera vers la page de connexion.')) {
                         handleBackupData(true).then(() => {
                           setTimeout(() => {
                             logout().then(() => {

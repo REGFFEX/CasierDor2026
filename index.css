@@ -6,9 +6,9 @@
   /* Thème clair (par défaut) */
   :root {
     color-scheme: light;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
+    --bg-primary: #F8FAFC;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
     --text-primary: #111827;
     --text-secondary: #6b7280;
     --text-tertiary: #9ca3af;
@@ -28,7 +28,7 @@
   }
 
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'SF Pro Display', 'Inter', sans-serif;
     -webkit-tap-highlight-color: transparent;
     background-color: var(--bg-primary);
     color: var(--text-primary);

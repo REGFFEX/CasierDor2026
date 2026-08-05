@@ -52,7 +52,7 @@ export function saveStorageRoot(label: string, pathHint?: string): StoreSettings
 export async function pickStorageDirectory(): Promise<{ label: string; pathHint?: string } | null> {
   try {
     const w = window as Window & {
-      showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
+      showDirectoryPicker?: (options?: any) => Promise<FileSystemDirectoryHandle>;
     };
     if (w.showDirectoryPicker) {
       const handle = await w.showDirectoryPicker({ mode: 'readwrite' });

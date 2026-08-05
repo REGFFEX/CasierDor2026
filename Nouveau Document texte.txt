@@ -1,0 +1,3 @@
+i need the app to be usable in local mode offline first using js and localstorage for saving data while user disconnected can use it cache for locl save and auto synch with user agreament and the topbar for base is to visible no good for pro so move it somewher alse and what else could we add for mobile forst size and effect for all buton liker creating buttons adding buttons.. list vew fliter by and all android needs for easy and pro using the top bar i was talking about the header with Base Cloud SQL Synchro (Inconnue)
+Forcer Synchro so we can use this space for professionnal print and the butter way to advence i you to plain a roadmap and lets do tihs stp by step phase by phase
+and i need for you to go to

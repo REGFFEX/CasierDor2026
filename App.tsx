@@ -7,31 +7,40 @@ import { AuthProvider } from './utils/authContext';
 import { useLanguage } from './utils/languageContext';
 import Layout from './components/Layout';
 import ModuleRouteGuard from './components/ModuleRouteGuard';
-import Dashboard from './pages/Dashboard';
-import NewSale from './pages/NewSale';
-import ProductList from './pages/ProductList';
-import ClientsPage from './pages/ClientsPage';
-import HistoryPage from './pages/HistoryPage';
-import AccountingPage from './pages/AccountingPage';
-import ReplenishmentPage from './pages/ReplenishmentPage';
-import RecycleBinPage from './pages/RecycleBinPage';
-import ActivityPage from './pages/ActivityPage';
-import StockPage from './pages/StockPage';
-import StatsPage from './pages/StatsPage';
-import SettingsPage from './pages/SettingsPage';
-import PermissionsPage from './pages/PermissionsPage';
-import UsersManagementPage from './pages/UsersManagementPage';
-import TouchScreenDiagnosticsPage from './pages/TouchScreenDiagnosticsPage';
-import AboutPage from './pages/AboutPage';
-import LegalPage from './pages/LegalPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import AccountChoicePage from './pages/AccountChoicePage';
-import RecoverySetupPage from './pages/RecoverySetupPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import StorageSetupPage from './pages/StorageSetupPage';
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const NewSale = React.lazy(() => import('./pages/NewSale'));
+const ProductList = React.lazy(() => import('./pages/ProductList'));
+const ClientsPage = React.lazy(() => import('./pages/ClientsPage'));
+const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
+const AccountingPage = React.lazy(() => import('./pages/AccountingPage'));
+const ReplenishmentPage = React.lazy(() => import('./pages/ReplenishmentPage'));
+const RecycleBinPage = React.lazy(() => import('./pages/RecycleBinPage'));
+const ActivityPage = React.lazy(() => import('./pages/ActivityPage'));
+const StockPage = React.lazy(() => import('./pages/StockPage'));
+const StatsPage = React.lazy(() => import('./pages/StatsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const PermissionsPage = React.lazy(() => import('./pages/PermissionsPage'));
+const UsersManagementPage = React.lazy(() => import('./pages/UsersManagementPage'));
+const TouchScreenDiagnosticsPage = React.lazy(() => import('./pages/TouchScreenDiagnosticsPage'));
+const AboutPage = React.lazy(() => import('./pages/AboutPage'));
+const LegalPage = React.lazy(() => import('./pages/LegalPage'));
+const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage'));
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
+const ForgotPasswordPage = React.lazy(() => import('./pages/ForgotPasswordPage'));
+const AccountChoicePage = React.lazy(() => import('./pages/AccountChoicePage'));
+const RecoverySetupPage = React.lazy(() => import('./pages/RecoverySetupPage'));
+const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
+const StorageSetupPage = React.lazy(() => import('./pages/StorageSetupPage'));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
+    <div className="animate-pulse flex flex-col items-center">
+      <div className="h-12 w-12 bg-blue-200 dark:bg-blue-800 rounded-full mb-4"></div>
+      <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
+  </div>
+);
 import { initializeStore } from './store';
 import { useAuth } from './utils/authContext';
 import { initDirectoryStructure } from './utils/fileManager';
@@ -100,6 +109,22 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 function App() {
   useEffect(() => {
     initializeStore();
+    // Préchargement asynchrone des modules pour des transitions fluides et instantanées
+    const preloadPages = async () => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        await Promise.all([
+          import('./pages/SettingsPage'),
+          import('./pages/NewSale'),
+          import('./pages/ProductList'),
+          import('./pages/HistoryPage'),
+        ]);
+        console.log('[App] Modules préchargés avec succès en arrière-plan');
+      } catch (err) {
+        console.warn('[App] Erreur lors du préchargement des modules:', err);
+      }
+    };
+    preloadPages();
   }, []);
 
   return (
@@ -107,7 +132,8 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <HashRouter>
-            <Routes>
+            <React.Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* Routes publiques */}
               <Route
                 path="/login"
@@ -193,7 +219,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
+              </Routes>
+            </React.Suspense>
           </HashRouter>
         </AuthProvider>
       </ThemeProvider>

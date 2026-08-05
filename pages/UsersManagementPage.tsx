@@ -272,7 +272,6 @@ const UsersManagementPage: React.FC = () => {
                   onDialCodeChange={setPhoneDialCode}
                   value={formData.phone}
                   onChange={(phone) => setFormData({ ...formData, phone })}
-                  appCountry={settings.country}
                 />
               </div>
               <div className="space-y-1">
@@ -421,8 +420,6 @@ const UsersManagementPage: React.FC = () => {
                           onDialCodeChange={setPhoneDialCode}
                           value={editFormData.phone || ''}
                           onChange={(phone) => setEditFormData({ ...editFormData, phone })}
-                          appCountry={settings.country}
-                          compact
                         />
                       </div>
                       <div>
