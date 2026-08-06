@@ -1,11 +1,12 @@
 import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+// import { saveAs } from 'file-saver'; // Remplacé par PlatformService
 import JSZip from 'jszip';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileFormat } from '../types/archive';
 import { addActivity } from '../store';
 import { LogAction } from '../types';
+import { platform } from './platform';
 
 export class ExportService {
   /**
@@ -78,21 +79,21 @@ export class ExportService {
     }
 
     const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, `${zipFilename}.zip`);
+    await platform.saveBlob(content, `${zipFilename}.zip`);
   }
 
   // --- PRIVATE HELPERS ---
 
-  private static exportJSON(data: any[], filename: string) {
+  private static async exportJSON(data: any[], filename: string) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
-    saveAs(blob, `${filename}.json`);
+    await platform.saveBlob(blob, `${filename}.json`);
   }
 
-  private static exportTXT(data: any[], filename: string) {
+  private static async exportTXT(data: any[], filename: string) {
     // Convert to a simple TSV or formatted text
     if (!data || data.length === 0) {
       const blob = new Blob(['No data'], { type: 'text/plain;charset=utf-8' });
-      saveAs(blob, `${filename}.txt`);
+      await platform.saveBlob(blob, `${filename}.txt`);
       return;
     }
 
@@ -101,10 +102,10 @@ export class ExportService {
     const content = [headers.join('\t'), ...rows].join('\n');
     
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    saveAs(blob, `${filename}.txt`);
+    await platform.saveBlob(blob, `${filename}.txt`);
   }
 
-  private static exportXLSX(data: any[], filename: string) {
+  private static async exportXLSX(data: any[], filename: string) {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Données');
@@ -112,10 +113,10 @@ export class ExportService {
     // Write array buffer
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(blob, `${filename}.xlsx`);
+    await platform.saveBlob(blob, `${filename}.xlsx`);
   }
 
-  private static exportPDF(data: any[], filename: string, title: string) {
+  private static async exportPDF(data: any[], filename: string, title: string) {
     const doc = new jsPDF();
     
     // Title
@@ -140,7 +141,8 @@ export class ExportService {
       doc.text("Aucune donnée disponible", 14, 40);
     }
 
-    doc.save(`${filename}.pdf`);
+    const pdfBlob = doc.output('blob');
+    await platform.saveBlob(pdfBlob, `${filename}.pdf`);
   }
 
   private static async exportZIP(files: Record<string, string>, filename: string) {
@@ -149,6 +151,6 @@ export class ExportService {
       zip.file(name, content);
     }
     const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, `${filename}.zip`);
+    await platform.saveBlob(content, `${filename}.zip`);
   }
 }
