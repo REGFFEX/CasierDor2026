@@ -253,18 +253,20 @@ const HistoryPage: React.FC = () => {
         {/* Toolbar d'actions multiples */}
         {selectedItems.size > 0 && (
           <div className="bg-blue-50 px-6 py-4 flex items-center justify-between border-b border-blue-100 animate-in slide-in-from-top-2">
-            <span className="text-blue-700 font-bold text-sm">{selectedItems.size} élément(s) sélectionné(s)</span>
+            <span className="text-blue-700 font-bold text-sm">
+              {t('history.selectedCount').replace('{count}', selectedItems.size.toString())}
+            </span>
             <div className="flex items-center space-x-2">
               {selectedItems.size === 1 ? (
                 <>
-                  <button onClick={() => downloadSelected(FileFormat.PDF)} className="btn-3d px-3 py-1.5 bg-white text-blue-600 rounded-lg text-xs font-bold shadow-sm hover:bg-blue-600 hover:text-white transition-all">PDF</button>
-                  <button onClick={() => downloadSelected(FileFormat.XLSX)} className="btn-3d px-3 py-1.5 bg-white text-green-600 rounded-lg text-xs font-bold shadow-sm hover:bg-green-600 hover:text-white transition-all">XLSX</button>
-                  <button onClick={() => downloadSelected(FileFormat.JSON)} className="btn-3d px-3 py-1.5 bg-white text-purple-600 rounded-lg text-xs font-bold shadow-sm hover:bg-purple-600 hover:text-white transition-all">JSON</button>
+                  <button onClick={() => downloadSelected(FileFormat.PDF)} className="btn-3d px-3 py-1.5 bg-white text-blue-600 rounded-lg text-xs font-bold shadow-sm hover:bg-blue-600 hover:text-white transition-all">{t('history.btnPDF')}</button>
+                  <button onClick={() => downloadSelected(FileFormat.XLSX)} className="btn-3d px-3 py-1.5 bg-white text-green-600 rounded-lg text-xs font-bold shadow-sm hover:bg-green-600 hover:text-white transition-all">{t('history.btnXLSX')}</button>
+                  <button onClick={() => downloadSelected(FileFormat.JSON)} className="btn-3d px-3 py-1.5 bg-white text-purple-600 rounded-lg text-xs font-bold shadow-sm hover:bg-purple-600 hover:text-white transition-all">{t('history.btnJSON')}</button>
                 </>
               ) : (
                 <button onClick={() => downloadSelected()} disabled={isProcessing} className="btn-3d flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-xl shadow-sm hover:bg-blue-700 transition-all">
                   {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  <span className="text-sm font-bold">Générer ZIP</span>
+                  <span className="text-sm font-bold">{t('history.generateZip')}</span>
                 </button>
               )}
             </div>
@@ -284,10 +286,10 @@ const HistoryPage: React.FC = () => {
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
-                <th className="px-6 py-4 font-bold">Document</th>
-                <th className="px-6 py-4 font-bold hidden sm:table-cell">Type</th>
-                <th className="px-6 py-4 font-bold hidden md:table-cell">Date</th>
-                <th className="px-6 py-4 font-bold text-right">Actions</th>
+                <th className="px-6 py-4 font-bold">{t('history.tableDocument')}</th>
+                <th className="px-6 py-4 font-bold hidden sm:table-cell">{t('history.tableType')}</th>
+                <th className="px-6 py-4 font-bold hidden md:table-cell">{t('history.tableDate')}</th>
+                <th className="px-6 py-4 font-bold text-right">{t('history.tableActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -342,7 +344,7 @@ const HistoryPage: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                     <Archive className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                    <p className="text-sm font-bold uppercase tracking-widest">Aucune archive trouvée</p>
+                    <p className="text-sm font-bold uppercase tracking-widest">{t('history.noArchiveFound')}</p>
                   </td>
                 </tr>
               )}

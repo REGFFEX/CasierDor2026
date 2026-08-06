@@ -100,11 +100,12 @@ const RecycleBinPage: React.FC = () => {
                     onChange={(e) => setFilterModule(e.target.value)}
                     className="px-6 py-3 bg-white border text-gray-600 font-bold rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    <option value="ALL">{t('filter.allModules') || 'Tous les modules'}</option>
+                    <option value="ALL">{t('filter.allModules', 'Tous les modules')}</option>
                     <option value="PRODUCT">{t('nav.products')}</option>
                     <option value="CLIENT">{t('nav.clients')}</option>
                     <option value="SALE">{t('nav.sales')}</option>
                     <option value="USER">{t('nav.users')}</option>
+                    <option value="ARCHIVE">{t('nav.history')}</option>
                 </select>
             </div>
 
@@ -116,7 +117,7 @@ const RecycleBinPage: React.FC = () => {
                                 <th className="px-6 py-4">{t('trash.item')}</th>
                                 <th className="px-6 py-4">{t('trash.module')}</th>
                                 <th className="px-6 py-4">{t('trash.deletedAt')}</th>
-                                <th className="px-6 py-4">{t('trash.expiresIn')}</th>
+                                <th className="px-6 py-4">{t('trash.expiresIn', 'Expire dans')}</th>
                                 <th className="px-6 py-4">Actions</th>
                             </tr>
                         </thead>

@@ -1228,7 +1228,7 @@ const SettingsPage: React.FC = () => {
                   >
                     <LogOut className="w-4 h-4 flex-shrink-0 mr-2" />
                     <span className="whitespace-normal break-words text-center leading-tight">
-                      {isProcessing ? 'Sauvegarde et déconnexion...' : 'Sauvegarder et Déconnecter'}
+                      {isProcessing ? t('settings.backupInProgress', 'Sauvegarde...') : t('settings.backupAndLogout', 'Sauvegarder et Déconnecter')}
                     </span>
                   </button>
 
@@ -1298,7 +1298,7 @@ const SettingsPage: React.FC = () => {
                   className="btn-3d flex-1 min-w-[160px] py-4 px-5 bg-cyan-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-200/50 disabled:opacity-50"
                 >
                   {isProcessing ? <Loader2 className="w-5 h-5 shrink-0 animate-spin" /> : <Download className="w-5 h-5 shrink-0" />}
-                  Exporter
+                  {t('settings.btnExport', 'Exporter')}
                 </button>
                 <button
                   type="button"
@@ -1307,7 +1307,7 @@ const SettingsPage: React.FC = () => {
                   className="btn-3d flex-1 min-w-[160px] py-4 px-5 bg-white border-2 border-cyan-200 text-cyan-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <UploadCloud className="w-5 h-5 shrink-0" />
-                  Importer
+                  {t('settings.btnImport', 'Importer')}
                 </button>
                 <input
                   ref={jsonImportRef}

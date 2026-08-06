@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
             title={t('dashboard.export')}
           >
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Exporter</span>
+            <span className="hidden sm:inline">{t('dashboard.export')}</span>
           </button>
           <button
             onClick={() => {
@@ -154,15 +154,15 @@ const Dashboard: React.FC = () => {
             title={t('dashboard.import')}
           >
             <UploadCloud className="w-4 h-4" />
-            <span className="hidden sm:inline">Importer</span>
+            <span className="hidden sm:inline">{t('dashboard.import')}</span>
           </button>
           <button
-            onClick={() => alert("Synchronisation Cloud en cours de développement")}
+            onClick={() => alert(t('dashboard.syncWip'))}
             className="btn-3d flex items-center space-x-2 bg-blue-600 px-4 py-2 rounded-xl shadow-sm border border-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-bold"
-            title="Synchroniser"
+            title={t('dashboard.syncBtn')}
           >
             <CloudSync className="w-4 h-4" />
-            <span className="hidden sm:inline">Synchroniser</span>
+            <span className="hidden sm:inline">{t('dashboard.syncBtn')}</span>
           </button>
           <div className="flex items-center space-x-3 text-sm font-medium bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-600">
             <Clock className="w-4 h-4" />
@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
       {/* Bannière de l'entreprise / Photo du bâtiment */}
       {settings.buildingImage && (
         <div className="w-full h-48 md:h-64 rounded-[2rem] overflow-hidden relative shadow-lg animate-in fade-in slide-in-from-bottom-4">
-          <img src={settings.buildingImage} alt="Bâtiment" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+          <img src={settings.buildingImage} alt={t('dashboard.building')} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
              <h2 className="text-white text-2xl md:text-3xl font-black drop-shadow-lg">{settings.name || 'Notre Entreprise'}</h2>
              {settings.address && <p className="text-white/90 text-sm font-bold flex items-center mt-1"><MapPin className="w-4 h-4 mr-1" /> {settings.address}</p>}
