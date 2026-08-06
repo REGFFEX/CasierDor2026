@@ -17,14 +17,15 @@ export const STORAGE_KEYS = {
   RECYCLE_BIN: 'casier_recycle_bin',
   ACTIVITIES: 'casier_activities',
   ACCOUNTING_TRANSACTIONS: 'casier_accounting_transactions',
-  REPLENISHMENT_ORDERS: 'casier_replenishment_orders'
+  REPLENISHMENT_ORDERS: 'casier_replenishment_orders',
+  ARCHIVES: 'casier_archives'
 };
 
 export const DEFAULT_SETTINGS: StoreSettings = {
-  name: "Casier d'Or",
-  phone: "+242 06 822 96 98",
-  email: "casierdor07@gmail.com",
-  address: "MAKAYABOU ZEPHYRIN",
+  name: "Mon Entreprise",
+  phone: "",
+  email: "",
+  address: "",
   currency: DEFAULT_CURRENCY,
   country: 'cg',
   language: 'fr',
@@ -42,17 +43,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   updatedAt: Date.now()
 };
 
-const MOCK_PRODUCTS: Product[] = [
-  { id: '1', sku: 'NG-001', name: 'Ngok 65cl', type: ProductType.BEVERAGE, price: 700, stock: 120, criticalThreshold: 20, active: true, createdAt: Date.now(), updatedAt: Date.now() },
-  { id: '2', sku: 'PR-001', name: 'Primus 65cl', type: ProductType.BEVERAGE, price: 650, stock: 45, criticalThreshold: 20, active: true, createdAt: Date.now(), updatedAt: Date.now() },
-  { id: '3', sku: 'CA-001', name: 'Casier Vide Ngok', type: ProductType.CRATE, price: 2000, stock: 15, criticalThreshold: 10, active: true, createdAt: Date.now(), updatedAt: Date.now() },
-  { id: '4', sku: 'VI-001', name: 'Vimto Canette', type: ProductType.BEVERAGE, price: 500, stock: 5, criticalThreshold: 15, active: true, createdAt: Date.now(), updatedAt: Date.now() },
-];
-
-const MOCK_CLIENTS: Client[] = [
-  { id: 'c1', code: 'CL-001', name: 'Jean Dupont', phone: '06 123 45 67', type: 'SC' as any, contactMethod: 'Téléphone' as any, note: 'Client fidèle', createdAt: Date.now(), updatedAt: Date.now() },
-  { id: 'c2', code: 'CL-002', name: 'Marie Lou', phone: '05 555 12 34', type: 'SC' as any, contactMethod: 'Téléphone' as any, note: 'Paiement cash uniquement', createdAt: Date.now(), updatedAt: Date.now() },
-];
+// Mock data supprimées pour la production (MVP)
 
 export const getStoreData = <T,>(key: string, defaultValue: T): T => {
   const data = localStorage.getItem(scopeStorageKey(key));
@@ -109,10 +100,10 @@ export const initializeStore = () => {
   ensureInstallationSecret();
   const has = (key: string) => localStorage.getItem(scopeStorageKey(key)) != null;
   if (!has(STORAGE_KEYS.PRODUCTS)) {
-    setStoreData(STORAGE_KEYS.PRODUCTS, MOCK_PRODUCTS);
+    setStoreData(STORAGE_KEYS.PRODUCTS, []);
   }
   if (!has(STORAGE_KEYS.CLIENTS)) {
-    setStoreData(STORAGE_KEYS.CLIENTS, MOCK_CLIENTS);
+    setStoreData(STORAGE_KEYS.CLIENTS, []);
   }
   if (!has(STORAGE_KEYS.SETTINGS)) {
     setStoreData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
@@ -195,7 +186,8 @@ export const restoreFromTrash = (trashId: string): { success: boolean, error?: s
     'PRODUCT': STORAGE_KEYS.PRODUCTS,
     'CLIENT': STORAGE_KEYS.CLIENTS,
     'SALE': STORAGE_KEYS.SALES,
-    'USER': STORAGE_KEYS.USERS
+    'USER': STORAGE_KEYS.USERS,
+    'ARCHIVE': STORAGE_KEYS.ARCHIVES
   };
 
   const key = storageKeyMap[itemToRestore.module];

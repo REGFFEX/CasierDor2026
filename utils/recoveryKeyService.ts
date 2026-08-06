@@ -147,6 +147,8 @@ export async function saveRecoveryKeyFile(
       return true;
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return false;
+      console.warn('showSaveFilePicker failed, falling back to classic download', err);
+      // Fallback
     }
   }
 

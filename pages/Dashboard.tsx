@@ -1,7 +1,7 @@
 
 import React, { useMemo, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid } from 'lucide-react';
+import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../utils/languageContext';
 import { formatDateTime } from '../utils/dateTimeUtils';
@@ -136,11 +136,11 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center flex-wrap gap-2">
           <button
             onClick={handleExportData}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black uppercase tracking-tighter hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+            className="btn-3d flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-bold"
             title={t('dashboard.export')}
           >
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('dashboard.export')}</span>
+            <span className="hidden sm:inline">Exporter</span>
           </button>
           <button
             onClick={() => {
@@ -150,13 +150,20 @@ const Dashboard: React.FC = () => {
               }
               fileInputRef.current?.click();
             }}
-            className="flex items-center space-x-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-xs font-black uppercase tracking-tighter hover:bg-purple-600 hover:text-white transition-all shadow-sm"
+            className="btn-3d flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-bold"
             title={t('dashboard.import')}
           >
             <UploadCloud className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('dashboard.import')}</span>
+            <span className="hidden sm:inline">Importer</span>
           </button>
-          <input type="file" ref={fileInputRef} onChange={handleImportData} accept=".json,application/json" className="hidden" />
+          <button
+            onClick={() => alert("Synchronisation Cloud en cours de développement")}
+            className="btn-3d flex items-center space-x-2 bg-blue-600 px-4 py-2 rounded-xl shadow-sm border border-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-bold"
+            title="Synchroniser"
+          >
+            <CloudSync className="w-4 h-4" />
+            <span className="hidden sm:inline">Synchroniser</span>
+          </button>
           <div className="flex items-center space-x-3 text-sm font-medium bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-600">
             <Clock className="w-4 h-4" />
             <span className="hidden lg:inline">{formatDateTime(new Date(), language, { includeTime: true, dateStyle: 'full', timeStyle: 'short' })}</span>
@@ -164,6 +171,18 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      <input type="file" ref={fileInputRef} onChange={handleImportData} accept=".json,application/json" className="hidden" />
+
+      {/* Bannière de l'entreprise / Photo du bâtiment */}
+      {settings.buildingImage && (
+        <div className="w-full h-48 md:h-64 rounded-[2rem] overflow-hidden relative shadow-lg animate-in fade-in slide-in-from-bottom-4">
+          <img src={settings.buildingImage} alt="Bâtiment" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
+             <h2 className="text-white text-2xl md:text-3xl font-black drop-shadow-lg">{settings.name || 'Notre Entreprise'}</h2>
+             {settings.address && <p className="text-white/90 text-sm font-bold flex items-center mt-1"><MapPin className="w-4 h-4 mr-1" /> {settings.address}</p>}
+          </div>
+        </div>
+      )}
 
       {settings.showDashboardShortcuts !== false && shortcutItems.length > 0 && (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -176,7 +195,7 @@ const Dashboard: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className="flex flex-col items-center p-4 rounded-xl bg-gray-50 hover:bg-blue-50 hover:text-blue-700 border border-gray-100 transition-all"
+                className="btn-3d flex flex-col items-center p-4 rounded-2xl bg-white hover:bg-blue-50 border border-gray-100 shadow-sm transition-all"
               >
                 <div className="mb-2 text-blue-600">{item.icon}</div>
                 <span className="text-[10px] font-bold text-center uppercase leading-tight">{item.label}</span>

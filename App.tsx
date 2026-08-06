@@ -106,6 +106,8 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+import { SidebarProvider } from './utils/sidebarContext';
+
 function App() {
   useEffect(() => {
     initializeStore();
@@ -131,6 +133,7 @@ function App() {
     <LanguageProvider>
       <ThemeProvider>
         <AuthProvider>
+          <SidebarProvider>
           <HashRouter>
             <React.Suspense fallback={<PageLoader />}>
               <Routes>
@@ -222,6 +225,7 @@ function App() {
               </Routes>
             </React.Suspense>
           </HashRouter>
+          </SidebarProvider>
         </AuthProvider>
       </ThemeProvider>
     </LanguageProvider>

@@ -33,6 +33,12 @@ import LanguageSettings from './settings/components/LanguageSettings';
 import AppearanceSettings from './settings/components/AppearanceSettings';
 import AuditSettings from './settings/components/AuditSettings';
 import ReceiptSettings from './settings/components/ReceiptSettings';
+import { ExportService } from '../utils/exportService';
+import { ImportService } from '../utils/importService';
+import { FileFormat, DocumentType } from '../types/archive';
+import { ArchiveService } from '../utils/archiveService';
+import { addActivity } from '../store';
+import { LogAction } from '../types';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,6 +83,9 @@ const SettingsPage: React.FC = () => {
     user: false
   });
   const [secureAuthForced, setSecureAuthForcedState] = useState(false);
+  const [selectedExportFormat, setSelectedExportFormat] = useState<FileFormat>(
+    (localStorage.getItem('casierdor_export_format') as FileFormat) || FileFormat.JSON
+  );
 
   useEffect(() => {
     setAuthDisabled(localStorage.getItem('auth_disabled') === 'true');
@@ -195,48 +204,109 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleExportJson = () => {
-    const allData: Record<string, unknown> = {};
-    Object.values(STORAGE_KEYS).forEach((key) => {
-      const raw = localStorage.getItem(scopeStorageKey(key));
-      allData[key] = raw ? JSON.parse(raw) : null;
-    });
-    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${t('settings.exportJson')}_${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleGenericExport = async () => {
+    setIsProcessing(true);
+    try {
+      const allData: Record<string, unknown> = {};
+      Object.values(STORAGE_KEYS).forEach((key) => {
+        const raw = localStorage.getItem(scopeStorageKey(key));
+        allData[key] = raw ? JSON.parse(raw) : null;
+      });
+
+      await ExportService.exportData(
+        [allData], // Wrap in array as service expects an array of objects
+        selectedExportFormat,
+        `Kelasi_Export_${new Date().toISOString().slice(0, 10)}`,
+        'Kelasi Data Export'
+      );
+      
+      // Save archive record of the export
+      ArchiveService.archiveDocument(
+        'admin', 
+        DocumentType.EXPORT, 
+        `Kelasi_Export_${new Date().toISOString().slice(0, 10)}.${selectedExportFormat.toLowerCase()}`, 
+        selectedExportFormat, 
+        allData
+      );
+      
+    } catch (e) {
+      console.error(e);
+      alert('Erreur lors de l\'export');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleImportJson = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGenericImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = JSON.parse(e.target?.result as string) as Record<string, unknown>;
+    setIsProcessing(true);
+    try {
+      const formatMap: Record<string, FileFormat> = {
+        'json': FileFormat.JSON,
+        'xlsx': FileFormat.XLSX,
+        'txt': FileFormat.TXT
+      };
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'json';
+      const format = formatMap[ext] || FileFormat.JSON;
+
+      const result = await ImportService.parseFile(file, format);
+      if (result.success && result.data && result.data.length > 0) {
         requestConfirm({
-          actionId: 'importJson',
-          message: t('confirm.importAllData'),
+          actionId: 'importDataGeneric',
+          message: `Vous allez importer ${result.validRows} enregistrements. Voulez-vous continuer ?`,
           level: 2,
           run: () => {
-            Object.entries(content).forEach(([key, value]) => {
-              if (value !== null && value !== undefined) {
-                localStorage.setItem(scopeStorageKey(key), JSON.stringify(value));
-              }
-            });
+            // For a generic import, we assume it's a full store dump if it's JSON, 
+            // otherwise it needs a specific mapping. We'll handle basic JSON full import here
+            // to maintain backward compatibility.
+            if (format === FileFormat.JSON) {
+              const content = result.data[0];
+              Object.entries(content).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  localStorage.setItem(scopeStorageKey(key), JSON.stringify(value));
+                }
+              });
+            } else {
+               // Logique d'import métier spécifique (produits, etc.)
+               alert('Import spécifique pris en charge via le service, mappings à implémenter selon la structure.');
+            }
+            
+            // Archiver l'import
+            ArchiveService.archiveDocument(
+              'admin', 
+              DocumentType.IMPORT, 
+              file.name, 
+              format, 
+              result.data
+            );
+
+            try {
+              addActivity({
+                userName: settings.adminName || 'Admin',
+                action: LogAction.IMPORT,
+                details: `Importation du fichier : ${file.name}`,
+                module: 'IMPORT'
+              });
+            } catch (e) {
+               console.warn(e);
+            }
+            
+            alert('Import terminé avec succès.');
             window.location.reload();
           },
         });
-      } catch {
-        alert(t('message.invalidFile'));
+      } else {
+        alert(t('message.invalidFile') + (result.errors.length > 0 ? ': ' + result.errors[0].message : ''));
       }
-      event.target.value = '';
-    };
-    reader.readAsText(file);
+    } catch (e) {
+       console.error(e);
+       alert(t('message.invalidFile'));
+    } finally {
+       setIsProcessing(false);
+       event.target.value = '';
+    }
   };
 
   const handleRestoreData = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,21 +330,26 @@ const SettingsPage: React.FC = () => {
         return;
       }
 
-      if (window.confirm(t('settings.restoreWarning'))) {
-        Object.entries(content).forEach(([key, value]) => {
-          if (value) {
-            localStorage.setItem(key, JSON.stringify(value));
-          }
-        });
-        alert(t('settings.restoreSuccessRestart'));
-        window.location.reload();
-      }
+      requestConfirm({
+        actionId: 'restore_backup',
+        title: t('settings.restoreWarning') || 'Attention',
+        message: t('settings.restoreWarning'),
+        level: 2,
+        run: () => {
+          Object.entries(content).forEach(([key, value]) => {
+            if (value) {
+              localStorage.setItem(key, JSON.stringify(value));
+            }
+          });
+          alert(t('settings.restoreSuccessRestart'));
+          window.location.reload();
+        }
+      });
     } catch (error) {
       console.error('Erreur restauration:', error);
       alert(t('settings.restoreError'));
     } finally {
       setIsProcessing(false);
-      // Réinitialiser l'input
       event.target.value = '';
     }
   };
@@ -283,13 +358,11 @@ const SettingsPage: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Vérifier que c'est une image
     if (!file.type.startsWith('image/')) {
       alert(t('settings.selectValidImage'));
       return;
     }
 
-    // Vérifier la taille (max 8MB)
     const MAX_SIZE = 8 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       alert(t('settings.logoSizeError', { size: (file.size / 1024 / 1024).toFixed(2) }));
@@ -300,7 +373,6 @@ const SettingsPage: React.FC = () => {
     reader.onload = async (e) => {
       const base64 = e.target?.result as string;
 
-      // Demander la permission média avant de traiter
       try {
         const permission = await requestMediaPermission();
         if (permission.status !== 'GRANTED' && permission.status !== 'UNAVAILABLE') {
@@ -309,7 +381,6 @@ const SettingsPage: React.FC = () => {
         }
       } catch (error) {
         console.warn('Erreur vérification permission média:', error);
-        // Continuer même si la permission échoue (web)
       }
 
       setSettings({
@@ -320,7 +391,6 @@ const SettingsPage: React.FC = () => {
     };
     reader.readAsDataURL(file);
 
-    // Réinitialiser l'input
     event.target.value = '';
   };
 
@@ -345,7 +415,6 @@ const SettingsPage: React.FC = () => {
     });
   };
 
-  // Charger le statut des dossiers
   useEffect(() => {
     const loadDirStatus = async () => {
       const status = await checkDirectoryStatus();
@@ -365,7 +434,6 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  // Handlers sécurité des fichiers
   const handleToggleEncryption = () => {
     setEncryptionConfig({
       ...encryptionConfig,
@@ -379,7 +447,6 @@ const SettingsPage: React.FC = () => {
       password: newPassword
     });
 
-    // Vérifier la force du mot de passe
     const strength = FileEncryptionManager.validatePasswordStrength(newPassword);
     setPasswordStrength(strength);
   };
@@ -412,7 +479,6 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  // Handlers mises à jour
   const handleCheckUpdates = async () => {
     setCheckingUpdates(true);
     try {
@@ -439,16 +505,21 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
-    if (window.confirm(t('settings.confirmInstallVersion', { version: updateInfo.latestVersion }))) {
-      try {
-        const result = await UpdateManager.installUpdate();
-        alert('✓ ' + result);
-        // En production, on redémarrerait l'app ici
-      } catch (error) {
-        alert(t('settings.installationError'));
-        console.error(error);
+    requestConfirm({
+      actionId: 'install_update',
+      title: t('settings.updatesTitle') || 'Mise à jour',
+      message: t('settings.confirmInstallVersion', { version: updateInfo.latestVersion }),
+      run: async () => {
+        try {
+          const result = await UpdateManager.installUpdate();
+          alert('✓ ' + result);
+          // En production, on redémarrerait l'app ici
+        } catch (error) {
+          alert(t('settings.installationError'));
+          console.error(error);
+        }
       }
-    }
+    });
   };
 
   // Fonction pour filtrer les sections par recherche
@@ -667,7 +738,10 @@ const SettingsPage: React.FC = () => {
                         <Shield className="w-5 h-5 text-green-600 dark:text-green-400" />
                       )}
                       <span className="font-bold text-gray-900 dark:text-white">
-                        {authDisabled ? `🔐 ${t('settings.authDisabled')}` : `🛡️ ${t('settings.authEnabled')}`}
+                        <div className="flex items-center gap-2">
+                          {authDisabled ? <Lock className="w-5 h-5 text-gray-500" /> : <ShieldCheck className="w-5 h-5 text-green-500" />}
+                          {authDisabled ? t('settings.authDisabled') : t('settings.authEnabled')}
+                        </div>
                       </span>
                     </div>
                     <ChevronDown className={`w-5 h-5 text-red-600 transition-transform ${showAuthSecuritySection ? 'rotate-180' : ''}`} />
@@ -724,7 +798,9 @@ const SettingsPage: React.FC = () => {
                       )}
 
                       <div className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-700 p-3 rounded-lg">
-                        <p className="font-semibold mb-1">⚠️ {t('settings.importantInfo')}</p>
+                        <p className="font-semibold mb-1 flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-yellow-500" /> {t('settings.importantInfo')}
+                        </p>
                         <ul className="space-y-1">
                           <li>• {authDisabled ? 'L\'activation' : 'La désactivation'} prendra effet immédiatement</li>
                           <li>• {authDisabled ? 'Vous devrez vous reconnecter' : 'Tous les utilisateurs auront accès'}</li>
@@ -919,7 +995,9 @@ const SettingsPage: React.FC = () => {
                     >
                       <div className="flex items-center space-x-3">
                         <RefreshCw className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        <span className="font-bold text-gray-900 dark:text-white">🔄 {t('settings.updatesTitle')}</span>
+                        <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4" /> {t('settings.updatesTitle')}
+                        </span>
                         {showUpdateNotification && (
                           <span className="ml-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse">
                             {t('settings.newUpdate')}
@@ -1196,29 +1274,47 @@ const SettingsPage: React.FC = () => {
               />
             </label>
             {isAdmin ? (
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center">
+                <select
+                  value={selectedExportFormat}
+                  onChange={(e) => {
+                    const val = e.target.value as FileFormat;
+                    setSelectedExportFormat(val);
+                    localStorage.setItem('casierdor_export_format', val);
+                  }}
+                  className="px-4 py-4 rounded-2xl border border-gray-200 bg-white text-sm font-bold shadow-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                >
+                  <option value={FileFormat.JSON}>Format JSON</option>
+                  <option value={FileFormat.XLSX}>Format Excel (XLSX)</option>
+                  <option value={FileFormat.TXT}>Format Texte (TXT)</option>
+                  <option value={FileFormat.PDF}>Format PDF</option>
+                  <option value={FileFormat.ZIP}>Archive (ZIP)</option>
+                </select>
+                
                 <button
                   type="button"
-                  onClick={handleExportJson}
-                  className="flex-1 min-w-[160px] py-4 px-5 bg-cyan-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-200/50"
+                  onClick={handleGenericExport}
+                  disabled={isProcessing}
+                  className="btn-3d flex-1 min-w-[160px] py-4 px-5 bg-cyan-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-200/50 disabled:opacity-50"
                 >
-                  <Download className="w-5 h-5 shrink-0" />
-                  {t('settings.exportJson')}
+                  {isProcessing ? <Loader2 className="w-5 h-5 shrink-0 animate-spin" /> : <Download className="w-5 h-5 shrink-0" />}
+                  Exporter
                 </button>
                 <button
                   type="button"
                   onClick={() => handleActionWithConfirmation('restoreData', () => jsonImportRef.current?.click())}
-                  className="flex-1 min-w-[160px] py-4 px-5 bg-white border-2 border-cyan-200 text-cyan-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-50 transition-all flex items-center justify-center gap-2"
+                  disabled={isProcessing}
+                  className="btn-3d flex-1 min-w-[160px] py-4 px-5 bg-white border-2 border-cyan-200 text-cyan-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <UploadCloud className="w-5 h-5 shrink-0" />
-                  {t('settings.importJson')}
+                  Importer
                 </button>
                 <input
                   ref={jsonImportRef}
                   type="file"
-                  accept=".json,application/json"
+                  accept=".json,application/json,.xlsx,.txt"
                   className="hidden"
-                  onChange={handleImportJson}
+                  onChange={handleGenericImport}
                 />
               </div>
             ) : (

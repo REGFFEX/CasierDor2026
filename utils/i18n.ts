@@ -214,7 +214,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'settings.updateDesc': 'Versions et maintenance logicielle',
     'settings.currentLanguage': 'Langue actuelle',
     'settings.syncWithSystem': 'Synchronisée avec le système',
-    'settings.generalInfo': 'Informations Générales',
+    'settings.generalInfo': "Profil de l'Entreprise",
     'settings.generalInfoDesc': 'Nom, Devise et Coordonnées',
     'settings.enterpriseTypeLabel': 'Type d\'entreprise',
     'settings.activityTypeLabel': 'Type d\'activité',
@@ -1539,7 +1539,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'settings.mediaPermissionDenied': 'Media permission denied. Cannot load logo.',
     'settings.imageLoadError': 'Error loading image',
     'settings.testAccountsSynced': '✓ Test accounts synced successfully!',
-    'settings.generalInfo': 'General Information',
+    'settings.generalInfo': 'Company Profile',
     'settings.generalInfoDesc': 'Name, Currency and Contact Details',
     'settings.enterpriseTypeLabel': 'Enterprise Type',
     'settings.activityTypeLabel': 'Activity Type',
@@ -2604,6 +2604,10 @@ export const t = (key: string, language: Language = 'fr', params?: Record<string
       text = text.replace(new RegExp(`\\{\\s*${keyEsc}\\s*\\}`, 'g'), val);
     });
   }
+
+  // Nettoyage final : on supprime les paramètres non remplacés (ex: {name} ou {{method}})
+  // pour éviter les affichages du type "Bienvenue, {name}" dans l'UI si le paramètre est absent
+  text = text.replace(/\{\{?\s*[a-zA-Z0-9_]+\s*\}?\}?/g, '');
 
   return text;
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, CheckCircle, Activity, RefreshCw, BarChart3, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle, Activity, RefreshCw, BarChart3, ArrowLeft, XCircle, AlertTriangle, Clipboard, Lightbulb } from 'lucide-react';
 import { touchScreenDiagnostics, type TouchScreenDiagnostics } from '../utils/touchScreenDiagnostics';
 import PageBackButton from '../components/PageBackButton';
 
@@ -132,9 +132,9 @@ const TouchScreenDiagnosticsPage: React.FC = () => {
               {getConfidenceIcon(diagnostics.confidence)}
               <div>
                 <h2 className="text-2xl font-bold">
-                  {diagnostics.confidence === 'healthy' && 'Écran Sain ✅'}
-                  {diagnostics.confidence === 'warning' && 'Anomalies Détectées ⚠️'}
-                  {diagnostics.confidence === 'critical' && 'Écran Défectueux 🔴'}
+                  {diagnostics.confidence === 'healthy' && <><CheckCircle className="w-5 h-5 inline text-green-500 mr-2"/> Écran Sain</>}
+                  {diagnostics.confidence === 'warning' && <><AlertTriangle className="w-5 h-5 inline text-yellow-500 mr-2"/> Anomalies Détectées</>}
+                  {diagnostics.confidence === 'critical' && <><XCircle className="w-5 h-5 inline text-red-500 mr-2"/> Écran Défectueux</>}
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   Confiance: {diagnostics.confidence}
@@ -155,9 +155,9 @@ const TouchScreenDiagnosticsPage: React.FC = () => {
               <span className="font-bold">Support Tactile:</span>
               {' '}
               {diagnostics.hasTouchSupport ? (
-                <span className="text-green-600 font-bold">✅ OUI</span>
+                <span className="text-green-600 font-bold"><CheckCircle className="w-4 h-4 inline mr-1"/> OUI</span>
               ) : (
-                <span className="text-red-600 font-bold">❌ NON (Souris/Clavier)</span>
+                <span className="text-red-600 font-bold"><XCircle className="w-4 h-4 inline mr-1"/> NON (Souris/Clavier)</span>
               )}
             </p>
           </div>
@@ -203,7 +203,7 @@ const TouchScreenDiagnosticsPage: React.FC = () => {
         {isTesting && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-blue-400 p-8">
             <p className="text-center font-bold text-blue-600 mb-4">
-              🧪 ZONE DE TEST - Testez votre écran tactile ici
+              ZONE DE TEST - Testez votre écran tactile ici
             </p>
             <div
               ref={testAreaRef}
@@ -240,13 +240,13 @@ const TouchScreenDiagnosticsPage: React.FC = () => {
               : 'bg-blue-600 hover:bg-blue-700 active:scale-95'
               }`}
           >
-            {isTesting ? '⏳ Test en cours (3s)...' : '🧪 Lancer Test Complet'}
+            {isTesting ? 'Test en cours (3s)...' : 'Lancer Test Complet'}
           </button>
           <button
             onClick={resetDiagnostics}
             className="py-4 px-6 rounded-xl font-bold bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-600 transition-all active:scale-95"
           >
-            🔄 Réinitialiser
+            <RefreshCw className="w-5 h-5 inline mr-2"/> Réinitialiser
           </button>
         </div>
 
@@ -260,7 +260,7 @@ const TouchScreenDiagnosticsPage: React.FC = () => {
             <ul className="space-y-3">
               {diagnostics.issues.map((issue, i) => (
                 <li key={i} className="flex gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-                  <span className="text-yellow-600 font-bold">⚠️</span>
+                  <AlertTriangle className="w-5 h-5 inline text-yellow-600"/>
                   <span className="text-gray-700 dark:text-gray-300">{issue}</span>
                 </li>
               ))}
@@ -271,31 +271,31 @@ const TouchScreenDiagnosticsPage: React.FC = () => {
         {/* Report */}
         {report && (
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <h3 className="font-bold text-lg mb-4">📋 Rapport Complet</h3>
+            <h3 className="font-bold text-lg mb-4"><Clipboard className="w-5 h-5 inline mr-2"/> Rapport Complet</h3>
             <pre className="bg-gray-50 dark:bg-slate-900 p-4 rounded-lg overflow-x-auto text-xs font-mono text-gray-700 dark:text-gray-300">
               {report}
             </pre>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(report);
-                alert('✅ Rapport copié dans le presse-papiers');
+                alert('Rapport copié dans le presse-papiers');
               }}
-              className="mt-4 py-2 px-4 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all text-sm"
+              className="w-full py-3 bg-gray-100 dark:bg-slate-700 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors font-bold"
             >
-              📋 Copier le Rapport
+              <Clipboard className="w-5 h-5 inline mr-2"/> Copier le Rapport
             </button>
           </div>
         )}
 
         {/* Help */}
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700 p-6">
-          <h3 className="font-bold mb-3">💡 Guide d'Utilisation</h3>
-          <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-            <li>1. ✅ Cliquez sur "Lancer Test Complet"</li>
-            <li>2. 🧪 Vous avez 3 secondes pour tester la zone (taps, glissades, appuis longs)</li>
-            <li>3. 📊 Le diagnostic s'affiche automatiquement après le test</li>
-            <li>4. ⚠️ Si des problèmes sont détectés, consultez le rapport</li>
-            <li>5. 🔄 Vous pouvez relancer le test plusieurs fois</li>
+          <h3 className="font-bold mb-3"><Lightbulb className="w-5 h-5 inline mr-2"/> Guide d'Utilisation</h3>
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+            <li>1. Cliquez sur "Lancer Test Complet"</li>
+            <li>2. La zone de test sera verrouillée pendant 3 secondes (Simulation)</li>
+            <li>3. Le diagnostic s'affiche automatiquement après le test</li>
+            <li>4. Si des problèmes sont détectés, consultez le rapport</li>
+            <li>5. Vous pouvez relancer le test plusieurs fois</li>
           </ul>
         </div>
 

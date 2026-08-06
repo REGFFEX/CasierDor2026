@@ -35,11 +35,14 @@ const LoginPage: React.FC = () => {
 
     const freshSettings = getStoreData<StoreSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
 
+    // Check lockout disabled for MVP / testing
+    /* 
     const lockoutStatus = checkLockout(formData.email, freshSettings.loginAttempts || {});
     if (lockoutStatus.isLocked) {
       setError(t('auth.lockoutMessage', { minutes: lockoutStatus.remainingMin }));
       return;
     }
+    */
 
     setIsLoading(true);
 
@@ -72,31 +75,7 @@ const LoginPage: React.FC = () => {
           }
         }, 1000);
       } else {
-        const currentAttempts = freshSettings.loginAttempts?.[formData.email]?.count || 0;
-        const newCount = currentAttempts + 1;
-        const isNowLocked = newCount >= 5;
-
-        const updatedSettings = {
-          ...freshSettings,
-          loginAttempts: {
-            ...freshSettings.loginAttempts,
-            [formData.email]: {
-              count: newCount,
-              lastAttempt: Date.now(),
-              isLocked: isNowLocked,
-            },
-          },
-        };
-        setStoreData(STORAGE_KEYS.SETTINGS, updatedSettings);
-
-        if (isNowLocked) {
-          setError(t('error.tooManyAttempts'));
-        } else {
-          const remaining = 5 - newCount;
-          setError(
-            `${response.message || t('auth.loginError')} (${t('auth.attemptsRemaining', { count: remaining })})`
-          );
-        }
+        setError(response.message || t('auth.loginError'));
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('auth.loginError'));

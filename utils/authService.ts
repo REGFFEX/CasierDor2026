@@ -23,6 +23,67 @@ import { hashPassword, verifyPassword, upgradePasswordHashIfLegacy } from './cry
 import { activateStorageForUser, clearActiveStorageScope } from './accountStorage';
 import { supabase } from './supabaseClient';
 
+type SupabaseUserRow = {
+  id: string;
+  tenantId: string;
+  email: string;
+  passwordHash?: string;
+  role?: string;
+  displayName?: string | null;
+  storageAccountId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+function isSupabaseConfigured(): boolean {
+  const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+  const supabaseAnonKey =
+    (import.meta as any).env.VITE_SUPABASE_ANON_KEY ||
+    (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  return Boolean(supabaseUrl && supabaseAnonKey);
+}
+
+function mapSupabaseUserRow(sbUser: SupabaseUserRow, passwordHash = ''): User {
+  const displayName = sbUser.displayName || sbUser.email;
+  const nameParts = displayName.split(' ');
+
+  return {
+    id: sbUser.id,
+    storageAccountId: sbUser.storageAccountId || sbUser.id,
+    uniqueId: `USR-${sbUser.id.slice(-4)}`,
+    name: displayName,
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' ') || '',
+    email: sbUser.email,
+    password: passwordHash,
+    role: (sbUser.role as UserRole) || UserRole.STAFF,
+    active: true,
+    permissions:
+      sbUser.role === UserRole.ADMIN
+        ? Object.values(Permission)
+        : [Permission.VIEW_DASHBOARD, Permission.VIEW_SALES],
+    isOnline: true,
+    createdAt: new Date(sbUser.createdAt || Date.now()).getTime(),
+    updatedAt: new Date(sbUser.updatedAt || Date.now()).getTime(),
+    preferences: { ...DEFAULT_USER_PREFERENCES },
+    displayName,
+  };
+}
+
+async function fetchSupabaseUserProfile(userId: string): Promise<SupabaseUserRow | null> {
+  const { data, error } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as SupabaseUserRow;
+}
+
 // Simuler une base de données locale (en production, utiliser une vraie BDD)
 class LocalDatabase {
   private static instance: LocalDatabase;
@@ -41,15 +102,14 @@ class LocalDatabase {
     this.loadFromLocalStorage();
     if (force || this.users.length === 0) {
       const adminPassword = await hashPassword('admin123');
-      const userPassword = await hashPassword('user123');
 
       const adminUser: User = {
         id: 'admin-1',
         storageAccountId: 'admin-1',
         uniqueId: 'ADM-001',
-        name: 'Admin User',
-        firstName: 'Admin',
-        lastName: 'User',
+        name: 'Super Admin',
+        firstName: 'Super',
+        lastName: 'Admin',
         email: 'admin@casierdor.app',
         password: adminPassword,
         role: UserRole.ADMIN,
@@ -61,30 +121,12 @@ class LocalDatabase {
         preferences: { ...DEFAULT_USER_PREFERENCES }
       };
 
-      const testUser: User = {
-        id: 'user-1',
-        storageAccountId: 'user-1',
-        uniqueId: 'USR-001',
-        name: 'Test User',
-        firstName: 'Test',
-        lastName: 'User',
-        email: 'user@casierdor.app',
-        password: userPassword,
-        role: UserRole.STAFF,
-        active: true,
-        permissions: [Permission.VIEW_DASHBOARD, Permission.VIEW_SALES],
-        isOnline: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        preferences: { ...DEFAULT_USER_PREFERENCES }
-      };
-
-      // Si force, supprimer les comptes existants avec ces emails pour éviter les doublons
+      // Si force, supprimer les comptes existants avec cet email pour éviter les doublons
       if (force) {
-        this.users = this.users.filter(u => u.email !== adminUser.email && u.email !== testUser.email);
+        this.users = this.users.filter(u => u.email !== adminUser.email);
       }
 
-      this.users.push(adminUser, testUser);
+      this.users.push(adminUser);
       this.saveToLocalStorage();
     }
   }
@@ -123,10 +165,10 @@ class LocalDatabase {
     }
   }
 
-  // Trouver un utilisateur par email
   findUserByEmail(email: string): User | null {
     this.loadFromLocalStorage();
-    return this.users.find(user => user.email.toLowerCase() === email.toLowerCase()) || null;
+    const normalized = email.toLowerCase().trim();
+    return this.users.find(user => user.email.toLowerCase().trim() === normalized) || null;
   }
 
   // Trouver un utilisateur par ID
@@ -186,6 +228,26 @@ class LocalDatabase {
 
     this.saveToLocalStorage();
     return this.users[userIndex];
+  }
+
+  saveUser(user: User): User {
+    this.loadFromLocalStorage();
+    const userIndex = this.users.findIndex(
+      (existing) => existing.email.toLowerCase() === user.email.toLowerCase()
+    );
+
+    if (userIndex === -1) {
+      this.users.push(user);
+    } else {
+      this.users[userIndex] = {
+        ...this.users[userIndex],
+        ...user,
+        updatedAt: Date.now(),
+      };
+    }
+
+    this.saveToLocalStorage();
+    return userIndex === -1 ? user : this.users[userIndex];
   }
 
   // Supprimer un utilisateur
@@ -347,65 +409,26 @@ export class AuthService {
   // Connexion
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
       let user: User | null = null;
+      let authenticatedViaSupabase = false;
 
-      if (supabaseUrl && supabaseAnonKey) {
+      if (isSupabaseConfigured()) {
         try {
-          const { data: sbUser, error: sbError } = await supabase
-            .from('User')
-            .select('*')
-            .eq('email', credentials.email.toLowerCase().trim())
-            .maybeSingle();
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: credentials.email.toLowerCase().trim(),
+            password: credentials.password,
+          });
 
-          if (sbUser && !sbError) {
-            const valid = await this.db.verifyPassword(credentials.password, sbUser.passwordHash);
-            if (valid) {
-              user = {
-                id: sbUser.id,
-                storageAccountId: sbUser.storageAccountId || sbUser.id,
-                uniqueId: `USR-${sbUser.id.slice(-4)}`,
-                name: sbUser.displayName || sbUser.email,
-                firstName: sbUser.displayName?.split(' ')[0] || '',
-                lastName: sbUser.displayName?.split(' ')[1] || '',
-                email: sbUser.email,
-                password: sbUser.passwordHash,
-                role: sbUser.role || UserRole.STAFF,
-                active: true,
-                permissions: sbUser.role === UserRole.ADMIN ? Object.values(Permission) : [Permission.VIEW_DASHBOARD, Permission.VIEW_SALES],
-                isOnline: true,
-                createdAt: new Date(sbUser.createdAt || Date.now()).getTime(),
-                updatedAt: new Date(sbUser.updatedAt || Date.now()).getTime(),
-                preferences: { ...DEFAULT_USER_PREFERENCES }
-              };
-              
-              // Mettre à jour la base locale pour rester en phase
-              const localUser = this.db.findUserByEmail(credentials.email);
-              if (!localUser) {
-                // Ajouter à la base locale si absent
-                this.db.syncTestAccounts(); // s'assurer d'initialiser d'abord
-                this.db.createUser({
-                  firstName: user.firstName || 'User',
-                  lastName: user.lastName || 'Sync',
-                  email: user.email,
-                  password: credentials.password,
-                  confirmPassword: credentials.password,
-                  companyName: 'Établissement Sync',
-                  acceptTerms: true
-                });
-              } else {
-                this.db.updateUser(localUser.id, {
-                  password: sbUser.passwordHash,
-                  displayName: sbUser.displayName,
-                  role: sbUser.role
-                });
-              }
+          if (authData.user && !authError) {
+            const sbUser = await fetchSupabaseUserProfile(authData.user.id);
+            if (sbUser) {
+              user = mapSupabaseUserRow(sbUser);
+              authenticatedViaSupabase = true;
+              this.db.saveUser(user);
             }
           }
         } catch (supabaseErr) {
-          console.warn('[AuthService] Échec récupération Supabase lors de la connexion, repli local:', supabaseErr);
+          console.warn('[AuthService] Échec connexion Supabase Auth, repli local:', supabaseErr);
         }
       }
 
@@ -427,7 +450,7 @@ export class AuthService {
         };
       }
 
-      if (user.password) {
+      if (!authenticatedViaSupabase && user.password) {
         const valid = await this.db.verifyPassword(credentials.password, user.password);
         if (!valid) {
           return {
@@ -441,10 +464,10 @@ export class AuthService {
         }
       }
 
-      // Mettre à jour la dernière connexion
-      const updatedUser = this.db.updateUser(user.id, {
-        lastLogin: Date.now()
-      });
+      const localUser = this.db.findUserByEmail(user.email);
+      const updatedUser = localUser
+        ? this.db.updateUser(localUser.id, { lastLogin: Date.now() })
+        : this.db.saveUser({ ...user, lastLogin: Date.now() });
 
       if (!updatedUser) {
         return {
@@ -500,61 +523,61 @@ export class AuthService {
         };
       }
 
-      // Créer l'utilisateur localement
-      const newUser = await this.db.createUser(data);
+      let newUser: User | null = null;
 
-      // Essayer de synchroniser avec Supabase
-      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      if (supabaseUrl && supabaseAnonKey) {
+      if (isSupabaseConfigured()) {
         try {
-          // Générateur UUID compatible HTTP non sécurisé (IP locales)
-          const tenantId = typeof crypto !== 'undefined' && crypto.randomUUID 
-            ? crypto.randomUUID() 
-            : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-                const r = (Math.random() * 16) | 0;
-                const v = c === 'x' ? r : (r & 0x3) | 0x8;
-                return v.toString(16);
-              });
-          
-          // 1. Créer le Tenant dans Supabase
-          const { error: tenantError } = await supabase
-            .from('Tenant')
-            .insert({
-              id: tenantId,
-              name: data.companyName || "Établissement",
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: data.email.toLowerCase().trim(),
+            password: data.password,
+            options: {
+              data: {
+                first_name: data.firstName.trim(),
+                last_name: data.lastName.trim(),
+                company_name: data.companyName || 'Établissement',
+                role: UserRole.ADMIN,
+              },
+            },
+          });
 
-          if (tenantError) {
-            console.error('[AuthService] Erreur création Tenant Supabase:', tenantError);
-          } else {
-            // 2. Créer l'Utilisateur dans Supabase
-            const { error: userError } = await supabase
-              .from('User')
-              .insert({
-                id: newUser.id,
-                tenantId: tenantId,
-                email: newUser.email,
-                passwordHash: newUser.password,
-                role: newUser.role,
-                displayName: newUser.displayName || '',
-                storageAccountId: newUser.storageAccountId || '',
-                createdAt: new Date(newUser.createdAt).toISOString(),
-                updatedAt: new Date(newUser.updatedAt).toISOString()
-              });
-
-            if (userError) {
-              console.error('[AuthService] Erreur création Utilisateur Supabase:', userError);
+          if (signUpError) {
+            console.error('[AuthService] Erreur inscription Supabase Auth:', signUpError);
+          } else if (signUpData.user) {
+            const sbUser = await fetchSupabaseUserProfile(signUpData.user.id);
+            if (sbUser) {
+              newUser = mapSupabaseUserRow(sbUser);
             } else {
-              console.log('[AuthService] Compte synchronisé avec Supabase avec succès.');
+              const displayName = `${data.firstName.trim()} ${data.lastName.trim()}`.trim();
+              newUser = {
+                id: signUpData.user.id,
+                storageAccountId: signUpData.user.id,
+                uniqueId: `USR-${signUpData.user.id.slice(-4)}`,
+                name: displayName,
+                firstName: data.firstName.trim(),
+                lastName: data.lastName.trim(),
+                email: signUpData.user.email || data.email.toLowerCase().trim(),
+                displayName,
+                companyName: data.companyName,
+                role: UserRole.ADMIN,
+                active: true,
+                permissions: Object.values(Permission),
+                isOnline: false,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                preferences: { ...DEFAULT_USER_PREFERENCES },
+              };
             }
+
+            this.db.saveUser(newUser);
+            console.log('[AuthService] Compte synchronisé avec Supabase Auth.');
           }
         } catch (supabaseErr) {
-          console.warn('[AuthService] Échec de la connexion Supabase lors de l\'inscription:', supabaseErr);
+          console.warn('[AuthService] Échec inscription Supabase Auth, compte local conservé:', supabaseErr);
         }
+      }
+
+      if (!newUser) {
+        newUser = await this.db.createUser(data);
       }
 
       this.saveCurrentUser(newUser);
@@ -578,6 +601,10 @@ export class AuthService {
   // Déconnexion
   async logout(): Promise<AuthResponse> {
     try {
+      if (isSupabaseConfigured()) {
+        await supabase.auth.signOut();
+      }
+
       this.saveCurrentUser(null);
       clearActiveStorageScope();
 
@@ -598,6 +625,15 @@ export class AuthService {
   // Mot de passe oublié
   async forgotPassword(data: ForgotPasswordData): Promise<AuthResponse> {
     try {
+      if (isSupabaseConfigured()) {
+        const { error } = await supabase.auth.resetPasswordForEmail(data.email.toLowerCase().trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) {
+          console.error('[AuthService] Supabase reset password error:', error);
+        }
+      }
+
       const user = this.db.findUserByEmail(data.email);
 
       if (!user) {

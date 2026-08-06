@@ -12,13 +12,14 @@ import { resolveCompanyProfile, getBusinessTypeLabel } from '../utils/companyPro
 import { STANDARD_TEXTS } from '../types/professional';
 import { performFullBackup } from '../utils/backupUtils';
 import CompanyLogo from './CompanyLogo';
+import { useSidebar } from '../utils/sidebarContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { state: sidebarState, toggleSidebar, closeMobile, setSidebarHovered } = useSidebar();
   const [isRibbonExpanded, setIsRibbonExpanded] = useState(false);
   const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
   const [lastTapTime, setLastTapTime] = useState(0);
@@ -325,21 +326,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     trackModuleVisit(location.pathname);
   }, [location.pathname]);
 
-  const renderNavLink = (item: NavigationItem, onClick?: () => void) => {
+  const renderNavLink = (item: NavigationItem, onClick?: () => void, isMobile: boolean = false) => {
     const isActive = location.pathname === item.path;
+    const isExpanded = isMobile || !sidebarState.desktopCollapsed || sidebarState.sidebarHovered;
+
     return (
       <Link
         key={item.path}
         to={item.path}
         onClick={onClick}
-        className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${isActive
+        className={`flex items-center px-4 py-3 rounded-xl transition-all active:scale-95 duration-200 ${isActive
           ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900'
           : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-blue-400'
-          }`}
+          } ${isExpanded ? 'space-x-3' : 'justify-center'}`}
       >
-        {item.icon}
-        <span className="font-medium">{item.label}</span>
-        {isActive && <ChevronRight className="ml-auto w-4 h-4" />}
+        <div className="flex-shrink-0">{item.icon}</div>
+        <span className={`font-medium whitespace-nowrap transition-all duration-300 overflow-hidden ${isExpanded ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>{item.label}</span>
+        {isActive && <ChevronRight className={`ml-auto w-4 h-4 transition-all duration-300 ${isExpanded ? 'block' : 'hidden'}`} />}
       </Link>
     );
   };
@@ -351,68 +354,65 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     icon: item.icon
   }));
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-slate-950 pb-20 md:pb-0">
-      {/* Mobile Top Header */}
-      <header className="md:hidden bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-4 flex items-center justify-between sticky top-0 z-50 no-print">
-        <div className="flex items-center space-x-3">
-          <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
-          <span className="font-bold text-base text-gray-800 dark:text-gray-100">{company.companyName || APP_NAME}</span>
-        </div>
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
-        >
-          <Menu className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-        </button>
-      </header>
+  const isExpanded = !sidebarState.desktopCollapsed || sidebarState.sidebarHovered;
 
+  return (
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 pb-20 md:pb-0">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 bg-white border-r h-screen sticky top-0 overflow-y-auto no-print">
-        <div className="p-8">
-          <div className="flex items-center space-x-3 mb-10">
-            <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="sm" />
-            <div>
-              <h1 className="font-bold text-xl text-gray-900 dark:text-gray-100 leading-tight">{company.companyName || APP_NAME}</h1>
-              <p className="text-xs text-gray-400 font-medium tracking-wider uppercase">
+      <aside
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => setSidebarHovered(false)}
+        className={`hidden md:flex flex-col bg-white dark:bg-slate-900 border-r dark:border-slate-800 h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out no-print ${sidebarState.desktopCollapsed && !sidebarState.sidebarHovered ? 'w-20' : 'w-64'}`}
+      >
+        <div className={`flex flex-col h-full overflow-y-auto custom-scrollbar overflow-x-hidden p-4`}>
+          <div className="flex items-center space-x-3 mb-10 mt-2 px-2">
+            <div className="flex-shrink-0">
+              <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="sm" />
+            </div>
+            <div className={`transition-opacity duration-300 whitespace-nowrap ${!isExpanded ? 'opacity-0 w-0 hidden' : 'opacity-100 w-auto'}`}>
+              <h1 className="font-bold text-lg text-gray-900 dark:text-gray-100 leading-tight truncate">{company.companyName || APP_NAME}</h1>
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">
                 {getBusinessTypeLabel(t, company.businessType) || company.businessType}
               </p>
-              {company.responsibleDisplayName && (
-                <p className="text-[10px] text-gray-400 mt-0.5 truncate">{company.responsibleDisplayName}</p>
-              )}
             </div>
           </div>
 
-          <nav className="space-y-1 mb-10">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2">Principal</p>
+          <nav className="space-y-1 mb-8">
+            <p className={`text-[9px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-300 ${!isExpanded ? 'opacity-0' : 'opacity-100'}`}>Principal</p>
             {primaryNav.map(item => renderNavLink(item))}
           </nav>
 
           <nav className="space-y-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2">Gestion</p>
+            <p className={`text-[9px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-300 ${!isExpanded ? 'opacity-0' : 'opacity-100'}`}>Gestion</p>
             {secondaryNav.map(item => renderNavLink(item))}
           </nav>
-        </div>
 
-        <div className="mt-auto p-8 border-t dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 space-y-3">
-          <button
-            onClick={() => toggleTheme()}
-            className="flex items-center space-x-3 px-4 py-3 w-full text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            <span>{theme === 'dark' ? t('settings.lightTheme') : t('settings.darkTheme')}</span>
-          </button>
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            className="flex items-center space-x-3 px-4 py-3 w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors font-medium"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>{t('menu.logout')}</span>
-          </button>
+          <div className="mt-auto border-t dark:border-slate-800 pt-4 space-y-2">
+            <button
+              onClick={() => toggleTheme()}
+              className={`flex items-center px-4 py-3 w-full text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium ${isExpanded ? 'space-x-3' : 'justify-center'}`}
+              title={theme === 'dark' ? t('settings.lightTheme') : t('settings.darkTheme')}
+            >
+              <div className="flex-shrink-0">
+                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </div>
+              <span className={`whitespace-nowrap transition-all duration-300 ${!isExpanded ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100'}`}>
+                {theme === 'dark' ? t('settings.lightTheme') : t('settings.darkTheme')}
+              </span>
+            </button>
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className={`flex items-center px-4 py-3 w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors font-medium ${isExpanded ? 'space-x-3' : 'justify-center'}`}
+              title={t('menu.logout')}
+            >
+              <div className="flex-shrink-0"><LogOut className="w-5 h-5" /></div>
+              <span className={`whitespace-nowrap transition-all duration-300 ${!isExpanded ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100'}`}>{t('menu.logout')}</span>
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Bottom Ribbon Mobile/Tablet - Responsive & Smart */}
+      {/* Mobile Bottom Ribbon - Responsive & Smart */}
       <nav
         onClick={handleRibbonTap}
         onTouchStart={handleRibbonTouchStart}
@@ -458,7 +458,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Mode 2: Petit écran (<500px) + Double-tap Expanded - Grille multidimensionnelle avec dual-axis scroll */}
+        {/* Mode 2: Petit écran (<500px) + Double-tap Expanded */}
         {screenWidth < 500 && isRibbonExpanded && (
           <div
             className="max-h-[60vh] overflow-auto scrollbar-hide rounded-t-3xl border-t border-x border-blue-200 dark:border-blue-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 mb-[-8px] shadow-[0_-12px_30px_rgba(0,0,0,0.2)] animate-slide-up"
@@ -475,7 +475,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </button>
               </div>
 
-              {/* Dual-Axis Scroll Grid Container */}
               <div className="overflow-auto max-w-full pb-2 scrollbar-thin">
                 <div className="grid grid-cols-4 gap-4 min-w-[400px]">
                   {mobileShortcuts.map((item) => (
@@ -514,7 +513,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Mode 3: Écran moyen/grand (≥500px) - Disposition normale si espace suffit */}
+        {/* Mode 3: Écran moyen/grand (≥500px) */}
         {screenWidth >= 500 && (
           <div className="flex justify-around items-center">
             {mobileShortcuts.map((item) => (
@@ -541,35 +540,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       </nav>
 
-      {/* Mobile Menu Drawer */}
-      {isSidebarOpen && (
+      {/* Mobile Menu Drawer (Side) */}
+      {sidebarState.mobileOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsSidebarOpen(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+            onClick={closeMobile}
           />
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl flex flex-col animate-slide-in">
-            <div className="p-6 border-b flex items-center justify-between">
-              <span className="font-bold text-lg">{settings.name || APP_NAME}</span>
-              <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-100 rounded-full">
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
+            <div className="p-6 border-b dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
+                <span className="font-bold text-lg dark:text-white">{company.companyName || APP_NAME}</span>
+              </div>
+              <button onClick={closeMobile} className="p-2 bg-gray-100 dark:bg-slate-800 dark:text-white rounded-full active:scale-95">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
               <nav className="space-y-1">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2">Principal</p>
-                {primaryNav.map(item => renderNavLink(item, () => setIsSidebarOpen(false)))}
+                {primaryNav.map(item => renderNavLink(item, closeMobile, true))}
               </nav>
               <nav className="space-y-1">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2">Gestion</p>
-                {secondaryNav.map(item => renderNavLink(item, () => setIsSidebarOpen(false)))}
+                {secondaryNav.map(item => renderNavLink(item, closeMobile, true))}
               </nav>
             </div>
             <div className="p-6 border-t dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 space-y-3">
               <button
                 onClick={() => {
                   toggleTheme();
-                  setIsSidebarOpen(false);
+                  closeMobile();
                 }}
                 className="flex items-center space-x-3 px-4 py-3 w-full text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
               >
@@ -578,7 +580,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
               <button
                 onClick={() => {
-                  setIsSidebarOpen(false);
+                  closeMobile();
                   setShowLogoutModal(true);
                 }}
                 className="flex items-center space-x-3 px-4 py-3 w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors font-medium"
@@ -591,28 +593,47 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       )}
 
-      {/* Main Content Area */}
-      <main
-        className="flex-1 flex flex-col w-full"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto w-full flex-1">
-          {children}
-        </div>
-
-        {/* Footer discret avec copyright */}
-        <footer className="bg-white dark:bg-slate-900 border-t dark:border-slate-800 py-4 px-4 text-center no-print">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {STANDARD_TEXTS.copyright}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              {STANDARD_TEXTS.allRightsReserved}
-            </p>
+      {/* Main Content Area Wrapper */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out min-w-0 ${sidebarState.desktopCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        
+        {/* Unified Top Header */}
+        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b dark:border-slate-800 px-4 py-4 flex items-center justify-between sticky top-0 z-30 transition-all duration-300 ease-in-out no-print">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleSidebar}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 transition-all"
+            >
+              {sidebarState.mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <div className="md:hidden flex items-center space-x-2">
+              <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
+              <span className="font-bold text-base text-gray-800 dark:text-gray-100 truncate max-w-[150px]">{company.companyName || APP_NAME}</span>
+            </div>
           </div>
-        </footer>
-      </main>
+        </header>
+
+        <main
+          className="flex-1 flex flex-col w-full"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto w-full flex-1">
+            {children}
+          </div>
+
+          {/* Footer discret avec copyright */}
+          <footer className="bg-white dark:bg-slate-900 border-t dark:border-slate-800 py-4 px-4 text-center no-print">
+            <div className="max-w-7xl mx-auto">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {STANDARD_TEXTS.copyright}
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {STANDARD_TEXTS.allRightsReserved}
+              </p>
+            </div>
+          </footer>
+        </main>
+      </div>
 
       {/* Modal de déconnexion avec sauvegarde */}
       {showLogoutModal && (

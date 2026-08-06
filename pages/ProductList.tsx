@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Edit2, Trash2, Package, Filter, Info } from 'lucide-react';
 import ScrollablePanel from '../components/ScrollablePanel';
 import ProductInfoModal from '../components/ProductInfoModal';
+import ConfirmActionModal from '../components/ConfirmActionModal';
 import PageBackButton from '../components/PageBackButton';
 import { getStoreData, setStoreData, addActivity, moveToTrash, DEFAULT_SETTINGS, STORAGE_KEYS } from '../store';
 import { Product, ProductType, LogAction, UserRole, StoreSettings } from '../types';
@@ -24,6 +25,7 @@ const ProductList: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings>(getStoreData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS));
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [selectedProductInfo, setSelectedProductInfo] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const filteredProducts = products
     .filter(p => {
@@ -41,14 +43,17 @@ const ProductList: React.FC = () => {
       return 0;
     });
 
-  const handleDelete = (product: Product) => {
-    if (confirm(t('stock.confirmDelete', { name: product.name }))) {
-      const newProducts = products.filter(p => p.id !== product.id);
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+  };
+
+  const confirmDeleteAction = () => {
+    if (productToDelete) {
+      const newProducts = products.filter(p => p.id !== productToDelete.id);
       setProducts(newProducts);
       setStoreData(STORAGE_KEYS.PRODUCTS, newProducts);
-
-      // Utiliser le nouveau système de corbeille
-      moveToTrash(product, 'PRODUCT');
+      moveToTrash(productToDelete, 'PRODUCT');
+      setProductToDelete(null);
     }
   };
 
@@ -74,8 +79,37 @@ const ProductList: React.FC = () => {
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => {
-        setFormData({ ...formData, image: reader.result as string });
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Compression en JPEG pour économiser de la place
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setFormData({ ...formData, image: dataUrl });
+        };
+        img.src = e.target?.result as string;
       };
       reader.onerror = () => {
         alert(t('settings.imageLoadError'));
@@ -244,10 +278,10 @@ const ProductList: React.FC = () => {
         </div>
         <button
           onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-          className="flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-100 transition-all hover:-translate-y-0.5"
+          className="fixed bottom-6 right-6 z-40 md:static md:z-auto flex items-center justify-center p-4 md:px-6 md:py-3 bg-blue-600 text-white font-bold rounded-full md:rounded-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5 md:hover:-translate-y-1"
         >
-          <Plus className="w-5 h-5" />
-          <span>{t('stock.newProduct')}</span>
+          <Plus className="w-6 h-6 md:w-5 md:h-5" />
+          <span className="hidden md:inline md:ml-2">{t('stock.newProduct')}</span>
         </button>
       </div>
 
@@ -273,24 +307,47 @@ const ProductList: React.FC = () => {
 
       {showFilters && (
         <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2">
-          <div className="flex flex-wrap gap-6">
-            <div className="space-y-1">
+          <div className="flex flex-col gap-6">
+            <div className="space-y-3">
               <label className="text-[10px] font-bold text-gray-400 uppercase">{t('stock.category')}</label>
-              <select className="px-4 py-2 bg-gray-50 border rounded-xl outline-none text-xs font-bold" value={filterType} onChange={e => setFilterType(e.target.value)}>
-                <option value="">{t('stock.allCategories')}</option>
-                {Object.values(ProductType).map((pt) => <option key={pt} value={pt}>{enumLabel(t, 'productType', pt)}</option>)}
-                {settings.customProductTypes?.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setFilterType('')}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${!filterType ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  {t('stock.allCategories')}
+                </button>
+                {Object.values(ProductType).map((pt) => (
+                  <button
+                    key={pt}
+                    onClick={() => setFilterType(pt)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filterType === pt ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+                  >
+                    {enumLabel(t, 'productType', pt)}
+                  </button>
+                ))}
+                {settings.customProductTypes?.map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setFilterType(t)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filterType === t ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase">{t('stock.sortBy')}</label>
-              <select className="px-4 py-2 bg-gray-50 border rounded-xl outline-none text-xs font-bold" value={sortBy} onChange={e => setSortBy(e.target.value as any)}>
-                <option value="recent">{t('stock.mostRecent')}</option>
-                <option value="old">{t('stock.oldest')}</option>
-                <option value="price_asc">{t('stock.priceAscending')}</option>
-                <option value="price_desc">{t('stock.priceDescending')}</option>
-              </select>
-            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
+              <div className="space-y-1 flex-1 max-w-xs">
+                <label className="text-[10px] font-bold text-gray-400 uppercase">{t('stock.sortBy')}</label>
+                <select className="w-full px-4 py-2.5 bg-gray-50 border rounded-xl outline-none text-sm font-bold" value={sortBy} onChange={e => setSortBy(e.target.value as any)}>
+                  <option value="recent">{t('stock.mostRecent')}</option>
+                  <option value="old">{t('stock.oldest')}</option>
+                  <option value="price_asc">{t('stock.priceAscending')}</option>
+                  <option value="price_desc">{t('stock.priceDescending')}</option>
+                </select>
+              </div>
             <div className="mt-auto">
               <button
                 onClick={() => setShowTypeManager(true)}
@@ -300,12 +357,82 @@ const ProductList: React.FC = () => {
                 <span>{t('stock.manageTypes')}</span>
               </button>
             </div>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-transparent md:bg-white md:rounded-3xl md:border md:border-gray-100 md:shadow-sm overflow-hidden">
+        {/* Vue Mobile : Cartes (cachées sur PC) */}
+        <div className="md:hidden space-y-3 pb-24 px-1">
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-bold">{t('stock.noProductFound') || 'Aucun produit'}</p>
+            </div>
+          ) : (
+            filteredProducts.map(product => (
+              <div key={product.id} className={`bg-white border border-gray-100 p-4 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col gap-3 relative ${!product.active ? 'opacity-50 grayscale' : ''}`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-blue-400"><Package className="w-6 h-6" /></div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-black text-gray-900 truncate">
+                      <HighlightQuery text={product.name} query={searchQuery} />
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      <span className="text-[9px] font-bold px-2 py-0.5 bg-gray-100 rounded-md text-gray-600">{product.type}</span>
+                      <span className="text-[9px] font-bold text-gray-400 flex items-center">
+                        SKU: <HighlightQuery text={product.sku} query={searchQuery} />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-base font-black text-blue-600">
+                      <CurrencyDisplay amount={product.price} from="XAF" />
+                    </div>
+                    <div className="flex flex-col items-end mt-1">
+                      <span className={`text-xs font-black ${product.stock <= product.criticalThreshold ? 'text-orange-600' : 'text-green-600'}`}>
+                        {product.stock} en stock
+                      </span>
+                      {product.stock <= product.criticalThreshold && (
+                        <span className="bg-orange-100 text-orange-600 text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5">Faible</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3 mt-1">
+                  <button
+                    onClick={() => setSelectedProductInfo(product)}
+                    className="flex-1 py-2 text-xs font-bold bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-xl flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <Info className="w-3.5 h-3.5" /> Info
+                  </button>
+                  <button
+                    onClick={() => { setEditingProduct(product); setIsModalOpen(true); }}
+                    className="flex-1 py-2 text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" /> Modifier
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(product)}
+                    className="px-4 py-2 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Vue Desktop : Tableau */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -380,7 +507,7 @@ const ProductList: React.FC = () => {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(product)}
+                        onClick={() => handleDeleteClick(product)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -452,6 +579,14 @@ const ProductList: React.FC = () => {
           </div>
         </div>
       )}
+      <ConfirmActionModal
+        open={!!productToDelete}
+        actionId={`delete-product-${productToDelete?.id}`}
+        title={t('confirm.deleteTitle') || 'Confirmation'}
+        message={t('stock.confirmDelete', { name: productToDelete?.name || '' })}
+        onCancel={() => setProductToDelete(null)}
+        onConfirm={confirmDeleteAction}
+      />
     </div>
   );
 };

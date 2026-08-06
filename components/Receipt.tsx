@@ -83,11 +83,18 @@ const Receipt: React.FC<ReceiptProps> = ({ sale, settings }) => {
       <div className="w-[80mm] max-w-[80mm] mx-auto p-4 bg-white text-black font-mono text-[10px] space-y-3 leading-tight receipt-container print:p-0 print:w-full">
         {/* Header */}
         <div className="text-center space-y-1">
+          {profile.logo && (
+            <div className="flex justify-center mb-2">
+              <CompanyLogo src={profile.logo} fallbackLetter={profile.companyName?.[0] || 'C'} size="sm" />
+            </div>
+          )}
           <h2 className="text-sm font-black uppercase tracking-tight">{profile.companyName}</h2>
-          <p className="text-[8px] uppercase tracking-wider">
-            {getBusinessTypeLabel(t, profile.businessType, language) || profile.businessType}
-          </p>
-          <p className="text-[8px]">{profile.address}</p>
+          {profile.businessType && (
+            <p className="text-[8px] uppercase tracking-wider">
+              {getBusinessTypeLabel(t, profile.businessType, language) || profile.businessType}
+            </p>
+          )}
+          {profile.address && <p className="text-[8px]">{profile.address}</p>}
           {profile.publicPhone && <p className="text-[8px]">Tél: {profile.publicPhone}</p>}
         </div>
 
@@ -159,12 +166,23 @@ const Receipt: React.FC<ReceiptProps> = ({ sale, settings }) => {
   if (template === 'pro_bw') {
     return (
       <div className="bg-white p-8 rounded-none border-2 border-black max-w-md mx-auto receipt-container print:border-none print:p-4 text-black overflow-hidden relative font-sans">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-black tracking-tight uppercase leading-tight">{profile.companyName}</h2>
-          <p className="text-xs font-bold tracking-widest uppercase mt-1">
-            {getBusinessTypeLabel(t, profile.businessType, language) || profile.businessType}
-          </p>
-        </div>
+        <div className="flex items-center space-x-4 mb-8">
+            {profile.logo && (
+              <div className="flex-shrink-0">
+                <CompanyLogo src={profile.logo} fallbackLetter={profile.companyName?.[0] || 'C'} size="lg" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-2xl font-black text-black tracking-tight uppercase">
+                {profile.companyName}
+              </h1>
+              {profile.businessType && (
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">
+                  {getBusinessTypeLabel(t, profile.businessType, language) || profile.businessType}
+                </p>
+              )}
+            </div>
+          </div>
 
         <div className="grid grid-cols-2 gap-4 border-y-2 border-black py-4 mb-6">
           <div>
@@ -299,7 +317,7 @@ const Receipt: React.FC<ReceiptProps> = ({ sale, settings }) => {
       {/* Business Coordinates */}
       <div className="mt-12 text-center p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
         <div className="flex flex-col items-center justify-center space-y-1">
-          <p className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{profile.address}</p>
+          {profile.address && <p className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{profile.address}</p>}
           <div className="flex flex-col items-center space-y-0.5 text-[10px] font-bold text-gray-500">
             {(profile.publicPhones.length ? profile.publicPhones : [profile.publicPhone].filter(Boolean)).map((ph) => (
               <span key={ph}>📞 {ph}</span>

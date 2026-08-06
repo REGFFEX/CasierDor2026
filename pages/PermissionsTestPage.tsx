@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, AlertCircle, Zap, Download, Smartphone, Monitor, Terminal } from 'lucide-react';
+import { Check, X, AlertCircle, Zap, Download, Smartphone, Monitor, Terminal, BarChart3, Lightbulb, CheckCircle2, XCircle } from 'lucide-react';
 import { 
   getAllPermissionsStatus, 
   PermissionStatus,
@@ -111,7 +111,7 @@ const PermissionsTestPage: React.FC = () => {
       {/* Résultats Permissions */}
       {permissionsStatus && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">📊 État des Permissions</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100"><BarChart3 className="w-6 h-6 inline mr-2 text-blue-500"/> État des Permissions</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(permissionsStatus).map(([type, result]: [string, any]) => (
@@ -139,8 +139,8 @@ const PermissionsTestPage: React.FC = () => {
           <div className="space-y-2">
             <p><strong>Status:</strong> {testMediaResult.status}</p>
             <p><strong>Message:</strong> {testMediaResult.message}</p>
-            <p><strong>Peut réessayer:</strong> {testMediaResult.canRetry ? '✅ Oui' : '❌ Non'}</p>
-            <p><strong>Ouvrir paramètres:</strong> {testMediaResult.shouldOpenSettings ? '✅ Oui' : '❌ Non'}</p>
+            <p><strong>Peut réessayer:</strong> {testMediaResult.canRetry ? <><CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600"/> Oui</> : <><XCircle className="w-4 h-4 inline mr-1 text-red-600"/> Non</>}</p>
+            <p><strong>Ouvrir paramètres:</strong> {testMediaResult.shouldOpenSettings ? <><CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600"/> Oui</> : <><XCircle className="w-4 h-4 inline mr-1 text-red-600"/> Non</>}</p>
           </div>
         </div>
       )}
@@ -159,12 +159,12 @@ const PermissionsTestPage: React.FC = () => {
               
               <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-bold">En Ligne</p>
-                <p className="text-lg font-bold">{environmentInfo.onLine ? '✅ Oui' : '❌ Non'}</p>
+                <p className="text-lg font-bold">{environmentInfo.onLine ? <><CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600"/> Oui</> : <><XCircle className="w-4 h-4 inline mr-1 text-red-600"/> Non</>}</p>
               </div>
 
               <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-bold">Capacitor</p>
-                <p className="text-lg font-bold">{environmentInfo.hasCapacitor ? '✅ Oui' : '❌ Non'}</p>
+                <p className="text-lg font-bold">{environmentInfo.hasCapacitor ? <><CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600"/> Oui</> : <><XCircle className="w-4 h-4 inline mr-1 text-red-600"/> Non</>}</p>
               </div>
 
               <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
@@ -174,12 +174,12 @@ const PermissionsTestPage: React.FC = () => {
 
               <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-bold">File API</p>
-                <p className="text-lg font-bold">{environmentInfo.hasFileAPI ? '✅ Oui' : '❌ Non'}</p>
+                <p className="text-lg font-bold">{environmentInfo.hasFileAPI ? <><CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600"/> Oui</> : <><XCircle className="w-4 h-4 inline mr-1 text-red-600"/> Non</>}</p>
               </div>
 
               <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-bold">Media Devices</p>
-                <p className="text-lg font-bold">{environmentInfo.hasMediaDevices ? '✅ Oui' : '❌ Non'}</p>
+                <p className="text-lg font-bold">{environmentInfo.hasMediaDevices ? <><CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600"/> Oui</> : <><XCircle className="w-4 h-4 inline mr-1 text-red-600"/> Non</>}</p>
               </div>
             </div>
 
@@ -200,7 +200,7 @@ const PermissionsTestPage: React.FC = () => {
           <p><strong>2. Tester Permission Média:</strong> Test spécifique pour charger des photos</p>
           <p><strong>3. Info Environnement:</strong> Affiche les capacités de votre navigateur/OS</p>
           
-          <p className="mt-4"><strong>💡 Pour utiliser dans SettingsPage:</strong></p>
+          <p className="mt-4"><strong><Lightbulb className="w-4 h-4 inline mr-1 text-yellow-500"/> Pour utiliser dans SettingsPage:</strong></p>
           <code className="block bg-white dark:bg-slate-800 p-3 rounded mt-2 overflow-x-auto">
             {`import { requestMediaPermission } from '../utils/permissionManager';
 const permission = await requestMediaPermission();`}

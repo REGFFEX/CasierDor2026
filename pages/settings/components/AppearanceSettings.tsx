@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Palette, ChevronDown, Image, X } from 'lucide-react';
+import { Palette, ChevronDown, Image, X, Sun, Moon, Square } from 'lucide-react';
 import { useLanguage } from '../../../utils/languageContext';
 import { useTheme } from '../../../utils/themeContext';
 
@@ -32,9 +32,9 @@ const AppearanceSettings: React.FC = () => {
           {/* Sélecteur de Thème */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { id: 'light', label: 'Clair', icon: '☀️', desc: 'Blanc/Bleu' },
-              { id: 'dark', label: 'Sombre', icon: '🌙', desc: 'Noir/Gris' },
-              { id: 'gray', label: 'Gris', icon: '🔲', desc: 'Pâle/Eco' }
+              { id: 'light', label: 'Clair', icon: <Sun className="w-8 h-8 text-amber-500" />, desc: 'Blanc/Bleu' },
+              { id: 'dark', label: 'Sombre', icon: <Moon className="w-8 h-8 text-indigo-400" />, desc: 'Noir/Gris' },
+              { id: 'gray', label: 'Gris', icon: <Square className="w-8 h-8 text-gray-400" />, desc: 'Pâle/Eco' }
             ].map(t => (
               <button
                 key={t.id}
@@ -46,7 +46,7 @@ const AppearanceSettings: React.FC = () => {
                   : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-pink-300'
                   }`}
               >
-                <span className="text-2xl">{t.icon}</span>
+                <div className="flex items-center justify-center mb-1">{t.icon}</div>
                 <p className="text-xs font-black text-gray-900 dark:text-gray-100 uppercase">{t.label}</p>
                 <p className="text-[9px] text-gray-500 dark:text-gray-400 truncate w-full">{t.desc}</p>
               </button>

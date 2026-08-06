@@ -100,8 +100,7 @@ const RecoverySetupPage: React.FC = () => {
                     method,
                     prefs.useKeyFilePassword ? keyFilePassword : undefined
                 );
-                if (!saved && prefs.useKeyFilePassword) {
-                    alert(t('auth.setupError'));
+                if (!saved) {
                     return;
                 }
             } else if (selectedOption === 4) {
@@ -221,7 +220,7 @@ const RecoverySetupPage: React.FC = () => {
             {/* Confirmation Modal */}
             {showConfirmation && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         <div className="text-center mb-6">
                             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Lock className="w-8 h-8 text-blue-600" />
