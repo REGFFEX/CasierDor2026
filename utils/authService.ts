@@ -421,11 +421,59 @@ export class AuthService {
 
           if (authData.user && !authError) {
             const sbUser = await fetchSupabaseUserProfile(authData.user.id);
+            const meta = authData.user.user_metadata || {};
+            
             if (sbUser) {
               user = mapSupabaseUserRow(sbUser);
-              authenticatedViaSupabase = true;
-              this.db.saveUser(user);
+            } else {
+              // Reconstruire à partir des métadonnées Supabase si pas de ligne dans la table 'User'
+              const displayName = `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || authData.user.email || 'Utilisateur';
+              user = {
+                id: authData.user.id,
+                storageAccountId: authData.user.id,
+                uniqueId: `USR-${authData.user.id.slice(-4)}`,
+                name: displayName,
+                firstName: meta.first_name || '',
+                lastName: meta.last_name || '',
+                email: authData.user.email || '',
+                role: meta.role || UserRole.ADMIN,
+                active: true,
+                permissions: Object.values(Permission),
+                isOnline: true,
+                createdAt: new Date(authData.user.created_at || Date.now()).getTime(),
+                updatedAt: Date.now(),
+                preferences: { ...DEFAULT_USER_PREFERENCES },
+                displayName,
+              };
             }
+
+            // Récupérer les métadonnées riches de Supabase
+            user = {
+              ...user,
+              companyName: meta.company_name || user.companyName,
+              enterpriseType: meta.enterprise_type || user.enterpriseType,
+              activityType: meta.activity_type || user.activityType,
+              avatar: meta.avatar || user.avatar,
+              companyLogo: meta.logo || user.companyLogo,
+              phone: meta.phone || user.phone,
+              recoveryEmail: meta.recovery_email || user.recoveryEmail,
+            };
+
+            // Fusionner avec l'utilisateur local s'il existe pour ne rien perdre
+            const existingLocalUser = this.db.findUserByEmail(credentials.email);
+            if (existingLocalUser) {
+               user = {
+                 ...existingLocalUser, // Priorité aux données locales
+                 ...user, // Mais on garde l'ID et l'état en ligne de Supabase
+                 id: authData.user.id,
+                 storageAccountId: authData.user.id,
+                 isOnline: true,
+                 lastLogin: Date.now()
+               };
+            }
+
+            authenticatedViaSupabase = true;
+            this.db.saveUser(user);
           }
         } catch (supabaseErr) {
           console.warn('[AuthService] Échec connexion Supabase Auth, repli local:', supabaseErr);
@@ -536,6 +584,16 @@ export class AuthService {
                 last_name: data.lastName.trim(),
                 company_name: data.companyName || 'Établissement',
                 role: UserRole.ADMIN,
+                enterprise_type: data.enterpriseType,
+                activity_type: data.activityType,
+                custom_enterprise_type: data.customEnterpriseType,
+                custom_activity_type: data.customActivityType,
+                phone: data.phone,
+                public_phones: data.publicPhones,
+                public_email: data.publicEmail,
+                recovery_email: data.recoveryEmail,
+                avatar: data.avatar,
+                logo: data.logo,
               },
             },
           });
@@ -558,10 +616,16 @@ export class AuthService {
                 email: signUpData.user.email || data.email.toLowerCase().trim(),
                 displayName,
                 companyName: data.companyName,
+                enterpriseType: data.enterpriseType,
+                activityType: data.activityType,
+                avatar: data.avatar,
+                companyLogo: data.logo,
+                phone: data.phone,
+                recoveryEmail: data.recoveryEmail,
                 role: UserRole.ADMIN,
                 active: true,
                 permissions: Object.values(Permission),
-                isOnline: false,
+                isOnline: true,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 preferences: { ...DEFAULT_USER_PREFERENCES },
