@@ -1,10 +1,14 @@
+import { Capacitor } from '@capacitor/core';
 import { PlatformService } from './PlatformService';
 import { WebPlatformAdapter } from './WebPlatformAdapter';
+import { CapacitorPlatformAdapter } from './CapacitorPlatformAdapter';
 
 // Factory pattern : retourne la bonne instance de service selon l'environnement
 export function getPlatformService(): PlatformService {
-  // TODO (Phase 5/6): Ajouter la détection Capacitor pour utiliser CapacitorPlatformAdapter
-  // (ex: if (Capacitor.isNativePlatform()))
+  // Détection Capacitor (Android/iOS)
+  if (Capacitor.isNativePlatform()) {
+    return new CapacitorPlatformAdapter();
+  }
   
   // Par défaut (Web et Tauri), on utilise le Web Adapter
   // (Le WebView Tauri supporte nativement le téléchargement de Blob via HTML5 pour l'instant)

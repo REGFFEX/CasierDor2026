@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CasierdOr</string>
+    <string name="title_activity_main">CasierdOr</string>
+    <string name="package_name">com.casierdor.app</string>
+    <string name="custom_url_scheme">com.casierdor.app</string>
+</resources>
