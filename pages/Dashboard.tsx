@@ -1,5 +1,7 @@
 
 import React, { useMemo, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -62,19 +64,36 @@ const Dashboard: React.FC = () => {
     };
   }, [sales, products, today]);
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     const allData: Record<string, any> = {};
     Object.values(STORAGE_KEYS).forEach(key => {
       const data = localStorage.getItem(scopeStorageKey(key));
       allData[key] = data ? JSON.parse(data) : null;
     });
 
-    const jsonBlob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(jsonBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${t('dashboard.export')}_${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
+    const fileName = `${t('dashboard.export')}_${new Date().toISOString().slice(0, 10)}.json`;
+    const jsonString = JSON.stringify(allData, null, 2);
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Filesystem.writeFile({
+          path: fileName,
+          data: jsonString,
+          directory: Directory.Documents,
+        });
+        alert(`Sauvegarde réussie dans les Documents : ${fileName}`);
+      } catch (error) {
+        console.error('Error saving file', error);
+        alert('Erreur lors de la sauvegarde sur l\'appareil. Vérifiez les permissions.');
+      }
+    } else {
+      const jsonBlob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(jsonBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+    }
   };
 
   const applyImport = (content: Record<string, unknown>) => {
@@ -195,10 +214,11 @@ const Dashboard: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className="btn-3d flex flex-col items-center p-4 rounded-2xl bg-white hover:bg-blue-50 border border-gray-100 shadow-sm transition-all"
+                className={`btn-3d flex flex-col items-center p-4 rounded-2xl bg-white hover:${item.bgColor?.split(' ')[0] || 'bg-blue-50'} border-b-4 ${item.borderColor || 'border-blue-600'} shadow-sm transition-all overflow-hidden relative group`}
               >
-                <div className="mb-2 text-blue-600">{item.icon}</div>
-                <span className="text-[10px] font-bold text-center uppercase leading-tight">{item.label}</span>
+                <div className={`mb-2 ${item.color || 'text-blue-600'} group-hover:scale-110 transition-transform`}>{item.icon}</div>
+                <span className="text-[10px] font-bold text-gray-700 text-center uppercase leading-tight z-10">{item.label}</span>
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${item.bgColor?.split(' ')[0] || 'bg-blue-50'}`} />
               </Link>
             ))}
           </div>

@@ -278,7 +278,7 @@ const ProductList: React.FC = () => {
         </div>
         <button
           onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-          className="fixed bottom-6 right-6 z-40 md:static md:z-auto flex items-center justify-center p-4 md:px-6 md:py-3 bg-blue-600 text-white font-bold rounded-full md:rounded-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5 md:hover:-translate-y-1"
+          className="fixed bottom-24 right-6 z-40 md:static md:z-auto flex items-center justify-center p-4 md:px-6 md:py-3 bg-blue-600 text-white font-bold rounded-full md:rounded-xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5 md:hover:-translate-y-1"
         >
           <Plus className="w-6 h-6 md:w-5 md:h-5" />
           <span className="hidden md:inline md:ml-2">{t('stock.newProduct')}</span>

@@ -329,19 +329,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const renderNavLink = (item: NavigationItem, onClick?: () => void, isMobile: boolean = false) => {
     const isActive = location.pathname === item.path;
     const isExpanded = isMobile || !sidebarState.desktopCollapsed || sidebarState.sidebarHovered;
+    
+    // Fallback colors si non définies
+    const activeBgColor = item.bgColor || 'bg-blue-50 dark:bg-blue-900/30';
+    const activeColor = item.color || 'text-blue-600 dark:text-blue-400';
+    const activeBorder = item.borderColor || 'border-blue-600';
 
     return (
       <Link
         key={item.path}
         to={item.path}
         onClick={onClick}
-        className={`flex items-center px-4 py-3 rounded-xl transition-all active:scale-95 duration-200 ${isActive
-          ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900'
-          : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-blue-400'
+        className={`flex items-center px-4 py-3 rounded-xl transition-all active:scale-95 duration-200 relative overflow-hidden ${
+          isActive
+            ? `${activeBgColor} ${activeColor} shadow-sm font-bold`
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200'
           } ${isExpanded ? 'space-x-3' : 'justify-center'}`}
       >
-        <div className="flex-shrink-0">{item.icon}</div>
-        <span className={`font-medium whitespace-nowrap transition-all duration-300 overflow-hidden ${isExpanded ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>{item.label}</span>
+        {/* L'effet Ruban (Ribbon) sur la gauche de l'élément actif */}
+        {isActive && (
+          <div className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-r-full ${activeBgColor.replace('50', '500').replace('900/30', '500')} ${activeBorder} border-l-4`} />
+        )}
+        <div className={`flex-shrink-0 z-10 ${isActive ? activeColor : ''}`}>{item.icon}</div>
+        <span className={`z-10 whitespace-nowrap transition-all duration-300 overflow-hidden ${isExpanded ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>{item.label}</span>
         {isActive && <ChevronRight className={`ml-auto w-4 h-4 transition-all duration-300 ${isExpanded ? 'block' : 'hidden'}`} />}
       </Link>
     );
@@ -357,12 +367,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isExpanded = !sidebarState.desktopCollapsed || sidebarState.sidebarHovered;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 pb-20 md:pb-0">
+    <div 
+      className="min-h-screen flex flex-col pb-20 md:pb-0 relative"
+      style={{
+        backgroundColor: '#F8FAFC',
+        backgroundImage: 'url("/logo/background.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       {/* Desktop Sidebar */}
       <aside
         onMouseEnter={() => setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
-        className={`hidden md:flex flex-col bg-white dark:bg-slate-900 border-r dark:border-slate-800 h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out no-print ${sidebarState.desktopCollapsed && !sidebarState.sidebarHovered ? 'w-20' : 'w-64'}`}
+        className={`hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out no-print ${sidebarState.desktopCollapsed && !sidebarState.sidebarHovered ? 'w-20' : 'w-64'}`}
       >
         <div className={`flex flex-col h-full overflow-y-auto custom-scrollbar overflow-x-hidden p-4`}>
           <div className="flex items-center space-x-3 mb-10 mt-2 px-2">
@@ -418,8 +437,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         onTouchStart={handleRibbonTouchStart}
         onTouchMove={handleRibbonTouchMove}
         onTouchEnd={handleRibbonTouchEnd}
-        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t dark:border-slate-800 transition-all duration-300 z-[50] no-print ${screenWidth < 500 && !isRibbonExpanded ? 'py-2 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]' : 'py-3 px-2'
-          } ${isRibbonExpanded ? 'shadow-[0_-8px_24px_rgba(0,0,0,0.15),0_0_0_2px_rgba(37,99,235,0.4),inset_0_0_0_1px_rgba(37,99,235,0.2)]' : ''
+        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 transition-all duration-300 z-[50] no-print ${screenWidth < 500 && !isRibbonExpanded ? 'py-2 px-2 shadow-sm' : 'py-3 px-2'
+          } ${isRibbonExpanded ? 'shadow-[0_-8px_24px_rgba(0,0,0,0.15)]' : ''
           }`}
       >
         {/* Mode 1: Petit écran (<500px) - Scroll horizontal si nécessaire */}
