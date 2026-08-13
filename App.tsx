@@ -44,6 +44,7 @@ const PageLoader = () => (
 import { initializeStore } from './store';
 import { useAuth } from './utils/authContext';
 import { initDirectoryStructure } from './utils/fileManager';
+import { syncEngine } from './utils/syncEngine';
 
 // Composant pour protéger les routes
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -111,6 +112,7 @@ import { SidebarProvider } from './utils/sidebarContext';
 function App() {
   useEffect(() => {
     initializeStore();
+    syncEngine.start();
     // Préchargement asynchrone des modules pour des transitions fluides et instantanées
     const preloadPages = async () => {
       try {

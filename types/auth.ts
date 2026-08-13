@@ -25,6 +25,7 @@ export interface User {
   id: string;
   /** Scope localStorage partagé (admin = id propre ; staff = id de l'admin) */
   storageAccountId?: string;
+  tenantId?: string;
   firstName?: string;
   lastName?: string;
   name?: string;

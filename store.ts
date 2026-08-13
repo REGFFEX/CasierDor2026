@@ -5,6 +5,7 @@ import { getActivityUserName } from './utils/companyProfile';
 import { ensureInstallationSecret } from './utils/cryptoVault';
 import { runSecurityMigration } from './utils/recoveryKeyService';
 import { scopeStorageKey } from './utils/accountStorage';
+import { enqueueSyncItem, SyncEntityType } from './utils/syncQueue';
 
 export const STORAGE_KEYS = {
   PRODUCTS: 'casier_products',
@@ -50,7 +51,54 @@ export const getStoreData = <T,>(key: string, defaultValue: T): T => {
   return data ? JSON.parse(data) : defaultValue;
 };
 
+const getEntityTypeFromKey = (key: string): SyncEntityType | null => {
+  switch (key) {
+    case STORAGE_KEYS.PRODUCTS: return 'product';
+    case STORAGE_KEYS.CLIENTS: return 'client';
+    case STORAGE_KEYS.SALES: return 'sale';
+    case STORAGE_KEYS.SETTINGS: return 'settings';
+    case STORAGE_KEYS.MOVEMENTS: return 'movement';
+    case STORAGE_KEYS.ACCOUNTING_TRANSACTIONS: return 'accounting';
+    case STORAGE_KEYS.REPLENISHMENT_ORDERS: return 'replenishment';
+    default: return null;
+  }
+};
+
 export const setStoreData = <T,>(key: string, value: T): void => {
+  try {
+    const entityType = getEntityTypeFromKey(key);
+    
+    // Si c'est une entité synchronisable et que c'est un tableau
+    if (entityType && Array.isArray(value)) {
+      const oldArray = getStoreData<any[]>(key, []);
+      const oldMap = new Map(oldArray.map(item => [item.id, item]));
+      const newMap = new Map(value.map(item => [item.id, item]));
+      
+      // Détecter les Créations et Mises à jour
+      value.forEach(newItem => {
+        if (!newItem || !newItem.id) return;
+        const oldItem = oldMap.get(newItem.id);
+        if (!oldItem) {
+          enqueueSyncItem(entityType, 'create', newItem);
+        } else if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+          enqueueSyncItem(entityType, 'update', newItem);
+        }
+      });
+      
+      // Détecter les Suppressions strictes
+      oldArray.forEach(oldItem => {
+        if (oldItem && oldItem.id && !newMap.has(oldItem.id)) {
+          enqueueSyncItem(entityType, 'delete', { id: oldItem.id });
+        }
+      });
+    } else if (entityType === 'settings') {
+      // Cas particulier pour les paramètres qui sont un objet unique
+      enqueueSyncItem('settings', 'update', value as any);
+    }
+  } catch (err) {
+    console.error('Erreur lors du calcul du diff pour la synchronisation', err);
+  }
+
   localStorage.setItem(scopeStorageKey(key), JSON.stringify(value));
 };
 
