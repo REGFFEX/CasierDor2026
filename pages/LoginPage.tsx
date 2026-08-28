@@ -6,7 +6,7 @@ import { useAuth } from '../utils/authContext';
 import { LoginCredentials, StoreSettings, UserRole } from '../types';
 import { getStoreData, setStoreData, STORAGE_KEYS, DEFAULT_SETTINGS } from '../store';
 import { checkLockout } from '../utils/securityUtils';
-import AuthShell from '../components/auth/AuthShell';
+import AuthLayout from '../components/auth/AuthLayout';
 import AuthCrystalButton from '../components/auth/AuthCrystalButton';
 import { resolveCompanyProfile, getBusinessTypeLabel } from '../utils/companyProfile';
 import { isStorageConfigured } from '../utils/storageDirectory';
@@ -89,15 +89,9 @@ const LoginPage: React.FC = () => {
   const companyLine = [company.companyName, activityLabel].filter(Boolean).join(' — ');
 
   return (
-    <AuthShell
-      icon={
-        <span className="font-bold text-xl">
-          {company.companyName ? company.companyName.substring(0, 2).toUpperCase() : 'CO'}
-        </span>
-      }
+    <AuthLayout
       title={t('auth.login')}
       subtitle={companyLine || activityLabel}
-      maxWidth="md"
     >
 
           {error && (
@@ -184,11 +178,13 @@ const LoginPage: React.FC = () => {
             </AuthCrystalButton>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('auth.noAccount')}{' '}
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-                {t('auth.register')}
+              <Link
+                to="/forgot-password"
+                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                Mot de passe oublié ?
               </Link>
             </p>
           </div>
@@ -206,7 +202,7 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
           )}
-    </AuthShell>
+    </AuthLayout>
   );
 };
 

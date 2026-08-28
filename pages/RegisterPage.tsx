@@ -25,7 +25,7 @@ import PhoneInput from '../components/PhoneInput';
 import { SUPPORTED_CURRENCIES } from '../constants';
 import RecoverySecurityOptions from '../components/RecoverySecurityOptions';
 import { syncRegisterDataToStore } from '../utils/registerDataSync';
-import AuthShell from '../components/auth/AuthShell';
+import AuthLayout from '../components/auth/AuthLayout';
 import AuthCrystalButton from '../components/auth/AuthCrystalButton';
 import WizardStepper, { type WizardStep } from '../components/auth/WizardStepper';
 
@@ -519,7 +519,10 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <AuthShell icon={<Building className="w-8 h-8" />} title={t('auth.register')} subtitle={t('auth.registerSubtitle')} maxWidth="lg">
+    <AuthLayout
+      title={t('auth.createAccount')}
+      subtitle={t('auth.createAccountSubtitle')}
+    >
       <WizardStepper steps={steps} currentIndex={step} />
 
       {error && (
@@ -560,7 +563,7 @@ const RegisterPage: React.FC = () => {
           {t('auth.login')}
         </Link>
       </div>
-    </AuthShell>
+    </AuthLayout>
   );
 };
 

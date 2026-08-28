@@ -566,17 +566,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
             onClick={closeMobile}
           />
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
-            <div className="p-6 border-b dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
-                <span className="font-bold text-lg dark:text-white">{company.companyName || APP_NAME}</span>
+          <div className="absolute left-0 top-0 bottom-0 w-[80%] max-w-[320px] bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
+            <div className="p-4 md:p-6 border-b dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="md" />
+                <span className="font-bold text-xl dark:text-white truncate max-w-[150px]">{company.companyName || APP_NAME}</span>
               </div>
-              <button onClick={closeMobile} className="p-2 bg-gray-100 dark:bg-slate-800 dark:text-white rounded-full active:scale-95">
-                <X className="w-5 h-5" />
+              <button 
+                onClick={(e) => { e.stopPropagation(); closeMobile(); }} 
+                className="p-2 -mr-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-white rounded-full transition-colors active:scale-95"
+              >
+                <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-6">
               <nav className="space-y-1">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2">Principal</p>
                 {primaryNav.map(item => renderNavLink(item, closeMobile, true))}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle, Key, Upload } from 'lucide-react';
 import { useLanguage } from '../utils/languageContext';
+import AuthLayout from '../components/auth/AuthLayout';
 import AuthLanguageSelector from '../components/AuthLanguageSelector';
 import RecoverySecurityOptions from '../components/RecoverySecurityOptions';
 import KeyFilePasswordFields from '../components/KeyFilePasswordFields';
@@ -103,17 +104,11 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
+    <AuthLayout
+      title={t('auth.forgotPassword')}
+      subtitle={t('auth.forgotPasswordSubtitle')}
+    >
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-              <Key className="w-8 h-8" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {t('auth.forgotPassword')}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">{t('auth.forgotPasswordSubtitle')}</p>
             <div className="mt-4">
               <AuthLanguageSelector />
             </div>
@@ -265,9 +260,7 @@ const ForgotPasswordPage: React.FC = () => {
               {t('button.backToLogin')}
             </Link>
           </div>
-        </div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
 

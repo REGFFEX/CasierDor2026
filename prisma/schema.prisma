@@ -11,14 +11,24 @@ datasource db {
 
 /// Compte établissement (aligné storageAccountId)
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
-  products  Product[]
-  clients   Client[]
-  sales     Sale[]
+  id               String   @id @default(cuid())
+  name             String
+  /// Informations d'onboarding
+  activityType     String?
+  sector           String?
+  companySize      String?
+  acquisitionChannel String?
+  useCases         String?  // JSON stringifié des cas d'usage
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users            User[]
+  products         Product[]
+  clients          Client[]
+  sales            Sale[]
+  subscriptions    Subscription[]
+  activities       Activity[]
+  trashItems       TrashItem[]
 }
 
 model User {
@@ -30,8 +40,45 @@ model User {
   role             String
   displayName      String?
   storageAccountId String?
+  isSuperAdmin     Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Plan {
+  id               String   @id @default(cuid())
+  code             String   @unique // FREE, PRO, BUSINESS, BUSINESS_PRO, ENTERPRISE
+  name             String
+  price            Float    @default(0.0)
+  currency         String   @default("XAF")
+  interval         String   @default("month")
+  
+  // Limites / Quotas
+  maxUsers         Int      @default(1)
+  maxStores        Int      @default(1)
+  maxStorageMB     Int      @default(100)
+  
+  // Fonctionnalités (JSON pour flexibilité)
+  features         String   // JSON stringifié (ex: { "cloudSync": true, "advancedReports": false })
+  
+  subscriptions    Subscription[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Subscription {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id])
+  planId              String
+  plan                Plan     @relation(fields: [planId], references: [id])
+  status              String   // active, past_due, canceled, trialing
+  trialEndsAt         DateTime?
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  cancelAtPeriodEnd   Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model Product {
@@ -47,6 +94,7 @@ model Product {
   active            Boolean  @default(true)
   localId           String?  /// id localStorage pour mapping sync
   updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
 
   @@unique([tenantId, sku])
 }
@@ -60,6 +108,7 @@ model Client {
   phone     String?
   localId   String?
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 }
 
 model Sale {
@@ -74,6 +123,7 @@ model Sale {
   payload    String?  /// JSON lignes + métadonnées
   syncedAt   DateTime?
   createdAt  DateTime @default(now())
+  deletedAt  DateTime?
 }
 
 /// Journal sync FIFO (miroir utils/syncQueue.ts)
@@ -86,4 +136,30 @@ model SyncOutbox {
   attempts  Int      @default(0)
   lastError String?
   createdAt DateTime @default(now())
+}
+
+/// Traçabilité Globale : Historique des actions
+model Activity {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userName  String
+  userRole  String?
+  action    String
+  details   String?
+  module    String?
+  timestamp DateTime @default(now())
+  payload   String?  /// Copie JSON des données modifiées
+}
+
+/// Corbeille globale pour conservation des données soft-deleted
+model TrashItem {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  originalId  String
+  module      String
+  data        String   /// JSON complet de l'objet supprimé
+  deletedAt   DateTime @default(now())
+  expiresAt   DateTime /// Date de suppression définitive calculée
 }
