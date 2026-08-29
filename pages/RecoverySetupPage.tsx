@@ -89,6 +89,7 @@ const RecoverySetupPage: React.FC = () => {
                 if (prefs.useKeyFilePassword) {
                     if (keyFilePassword.length < 4 || keyFilePassword !== keyFilePasswordConfirm) {
                         alert(t('auth.passwordsDoNotMatch'));
+                        setIsProcessing(false);
                         return;
                     }
                 }
@@ -101,8 +102,14 @@ const RecoverySetupPage: React.FC = () => {
                     prefs.useKeyFilePassword ? keyFilePassword : undefined
                 );
                 if (!saved) {
+                    setIsProcessing(false);
                     return;
                 }
+            } else if (selectedOption === 2) {
+                // Google Auth - option future pour Supabase
+                alert(t('auth.googleAuthNotAvailable'));
+                setIsProcessing(false);
+                return;
             } else if (selectedOption === 4) {
                 setStoreData(STORAGE_KEYS.SETTINGS, { ...settings, recoveryConfig: null });
             }
@@ -110,6 +117,7 @@ const RecoverySetupPage: React.FC = () => {
             setSetupComplete(true);
             setShowConfirmation(false);
         } catch (error) {
+            console.error('Error in recovery setup:', error);
             alert(t('auth.setupError'));
         } finally {
             setIsProcessing(false);
