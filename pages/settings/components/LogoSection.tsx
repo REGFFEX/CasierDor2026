@@ -28,7 +28,7 @@ const LogoSection: React.FC<LogoSectionProps> = ({ settings, onChange }) => {
       return;
     }
 
-    const MAX_SIZE = 8 * 1024 * 1024;
+    const MAX_SIZE = 20 * 1024 * 1024; // Augmenté de 8MB à 20MB
     if (file.size > MAX_SIZE) {
       alert(t('settings.logoSizeError', { size: (file.size / 1024 / 1024).toFixed(2) }));
       return;

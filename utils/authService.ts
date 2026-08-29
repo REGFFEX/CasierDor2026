@@ -433,38 +433,122 @@ export class AuthService {
         if (sbUser) {
           user = mapSupabaseUserRow(sbUser);
         } else {
-          // Reconstruire à partir des métadonnées Supabase si pas de ligne dans la table 'User'
-          const displayName = `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || authData.user.email || 'Utilisateur';
-          user = {
-            id: authData.user.id,
-            storageAccountId: authData.user.id,
-            uniqueId: `USR-${authData.user.id.slice(-4)}`,
-            name: displayName,
-            firstName: meta.first_name || '',
-            lastName: meta.last_name || '',
-            email: authData.user.email || '',
-            role: meta.role || UserRole.ADMIN,
-            active: true,
-            permissions: Object.values(Permission),
-            isOnline: true,
-            createdAt: new Date(authData.user.created_at || Date.now()).getTime(),
-            updatedAt: Date.now(),
-            preferences: { ...DEFAULT_USER_PREFERENCES },
-            displayName,
-          };
+          // Créer automatiquement un profil utilisateur s'il n'existe pas
+          // Cela gère les utilisateurs créés directement dans Supabase Auth
+          const displayName = `${meta.first_name || meta.firstName || ''} ${meta.last_name || meta.lastName || ''}`.trim() || authData.user.email?.split('@')[0] || 'Utilisateur';
+          
+          // Créer le tenant si nécessaire
+          let tenantId: string;
+          const companyName = meta.company_name || meta.companyName || `${displayName}'s Business`;
+          
+          try {
+            // Essayer de trouver un tenant existant
+            const { data: existingTenant } = await supabase
+              .from('Tenant')
+              .select('id')
+              .eq('name', companyName)
+              .maybeSingle();
+
+            if (existingTenant) {
+              tenantId = existingTenant.id;
+            } else {
+              // Créer un nouveau tenant
+              const { data: newTenant, error: tenantError } = await supabase
+                .from('Tenant')
+                .insert({
+                  name: companyName,
+                  slug: companyName.toLowerCase().replace(/\s+/g, '-'),
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString()
+                })
+                .select('id')
+                .single();
+
+              if (tenantError || !newTenant) {
+                console.error('Error creating tenant:', tenantError);
+                // Fallback: utiliser l'ID utilisateur comme tenantId
+                tenantId = authData.user.id;
+              } else {
+                tenantId = newTenant.id;
+              }
+            }
+
+            // Créer le profil utilisateur
+            const { error: userError } = await supabase
+              .from('User')
+              .insert({
+                id: authData.user.id,
+                tenantId,
+                email: authData.user.email,
+                displayName,
+                role: meta.role || 'ADMIN',
+                storageAccountId: authData.user.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+
+            if (userError) {
+              console.error('Error creating user profile:', userError);
+            }
+
+            // Construire l'utilisateur localement
+            user = {
+              id: authData.user.id,
+              storageAccountId: authData.user.id,
+              tenantId,
+              uniqueId: `USR-${authData.user.id.slice(-4)}`,
+              name: displayName,
+              firstName: meta.first_name || meta.firstName || '',
+              lastName: meta.last_name || meta.lastName || '',
+              email: authData.user.email || '',
+              role: (meta.role || 'ADMIN') as UserRole,
+              active: true,
+              permissions: Object.values(Permission),
+              isOnline: true,
+              createdAt: new Date(authData.user.created_at || Date.now()).getTime(),
+              updatedAt: Date.now(),
+              preferences: { ...DEFAULT_USER_PREFERENCES },
+              displayName,
+              companyName,
+            };
+
+          } catch (error) {
+            console.error('Error setting up user profile:', error);
+            // Fallback minimal
+            user = {
+              id: authData.user.id,
+              storageAccountId: authData.user.id,
+              tenantId: authData.user.id,
+              uniqueId: `USR-${authData.user.id.slice(-4)}`,
+              name: displayName,
+              firstName: meta.first_name || meta.firstName || '',
+              lastName: meta.last_name || meta.lastName || '',
+              email: authData.user.email || '',
+              role: UserRole.ADMIN,
+              active: true,
+              permissions: Object.values(Permission),
+              isOnline: true,
+              createdAt: new Date(authData.user.created_at || Date.now()).getTime(),
+              updatedAt: Date.now(),
+              preferences: { ...DEFAULT_USER_PREFERENCES },
+              displayName,
+            };
+          }
         }
 
         // Récupérer les métadonnées riches de Supabase
-        user = {
-          ...user,
-          companyName: meta.company_name || user.companyName,
-          enterpriseType: meta.enterprise_type || user.enterpriseType,
-          activityType: meta.activity_type || user.activityType,
-          avatar: meta.avatar || user.avatar,
-          companyLogo: meta.logo || user.companyLogo,
-          phone: meta.phone || user.phone,
-          recoveryEmail: meta.recovery_email || user.recoveryEmail,
-        };
+        if (user) {
+          user = {
+            ...user,
+            companyName: meta.company_name || meta.companyName || user.companyName,
+            enterpriseType: meta.enterprise_type || meta.enterpriseType || user.enterpriseType,
+            activityType: meta.activity_type || meta.activityType || user.activityType,
+            avatar: meta.avatar || user.avatar,
+            companyLogo: meta.logo || user.companyLogo,
+            phone: meta.phone || user.phone,
+            recoveryEmail: meta.recovery_email || user.recoveryEmail,
+          };
+        }
 
         authenticatedViaSupabase = true;
       } else {
@@ -582,14 +666,71 @@ export class AuthService {
           };
         }
 
-        const sbUser = await fetchSupabaseUserProfile(signUpData.user.id);
+        // Créer automatiquement le profil utilisateur et le tenant s'ils n'existent pas
+        let sbUser = await fetchSupabaseUserProfile(signUpData.user.id);
+        let tenantId: string;
+        
+        if (!sbUser) {
+          // Créer le tenant
+          const companyName = data.companyName || `${data.firstName.trim()} ${data.lastName.trim()}'s Business`;
+          
+          try {
+            const { data: newTenant, error: tenantError } = await supabase
+              .from('Tenant')
+              .insert({
+                name: companyName,
+                slug: companyName.toLowerCase().replace(/\s+/g, '-'),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              })
+              .select('id')
+              .single();
+
+            if (tenantError || !newTenant) {
+              console.error('Error creating tenant:', tenantError);
+              tenantId = signUpData.user.id; // Fallback
+            } else {
+              tenantId = newTenant.id;
+            }
+
+            // Créer le profil utilisateur
+            const displayName = `${data.firstName.trim()} ${data.lastName.trim()}`.trim();
+            const { error: userError } = await supabase
+              .from('User')
+              .insert({
+                id: signUpData.user.id,
+                tenantId,
+                email: signUpData.user.email || data.email.toLowerCase().trim(),
+                displayName,
+                role: UserRole.ADMIN,
+                storageAccountId: signUpData.user.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+
+            if (userError) {
+              console.error('Error creating user profile:', userError);
+            }
+
+            // Récupérer le profil créé
+            sbUser = await fetchSupabaseUserProfile(signUpData.user.id);
+          } catch (error) {
+            console.error('Error setting up user profile:', error);
+            tenantId = signUpData.user.id; // Fallback
+          }
+        } else {
+          tenantId = sbUser.tenantId;
+        }
+        
         if (sbUser) {
           newUser = mapSupabaseUserRow(sbUser);
         } else {
+          // Fallback si la création a échoué
           const displayName = `${data.firstName.trim()} ${data.lastName.trim()}`.trim();
           newUser = {
             id: signUpData.user.id,
             storageAccountId: signUpData.user.id,
+            tenantId,
             uniqueId: `USR-${signUpData.user.id.slice(-4)}`,
             name: displayName,
             firstName: data.firstName.trim(),
@@ -670,14 +811,27 @@ export class AuthService {
   async forgotPassword(data: ForgotPasswordData): Promise<AuthResponse> {
     try {
       if (isSupabaseConfigured()) {
+        // Utiliser Supabase pour la réinitialisation du mot de passe
         const { error } = await supabase.auth.resetPasswordForEmail(data.email.toLowerCase().trim(), {
           redirectTo: `${window.location.origin}/reset-password`,
         });
+        
         if (error) {
           console.error('[AuthService] Supabase reset password error:', error);
+          return {
+            success: false,
+            message: error.message || 'Erreur lors de l\'envoi de l\'email de réinitialisation',
+            error: error.message
+          };
         }
+        
+        return {
+          success: true,
+          message: 'Un email de réinitialisation de mot de passe a été envoyé à votre adresse email.'
+        };
       }
 
+      // Fallback pour le mode local
       const user = this.db.findUserByEmail(data.email);
 
       if (!user) {
@@ -707,6 +861,53 @@ export class AuthService {
   // Réinitialiser le mot de passe
   async resetPassword(data: ResetPasswordData): Promise<AuthResponse> {
     try {
+      if (isSupabaseConfigured()) {
+        // Pour Supabase, le token est géré par Supabase Auth
+        // Nous devons d'abord vérifier si l'utilisateur est connecté via le lien de reset
+        const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+        
+        if (sessionError || !user) {
+          return {
+            success: false,
+            message: 'Session invalide ou expirée. Veuillez recommencer la procédure de réinitialisation.'
+          };
+        }
+
+        // Valider le mot de passe
+        if (data.password.length < AUTH_VALIDATION_RULES.PASSWORD_MIN_LENGTH) {
+          return {
+            success: false,
+            message: AUTH_ERROR_MESSAGES.WEAK_PASSWORD
+          };
+        }
+
+        if (data.password !== data.confirmPassword) {
+          return {
+            success: false,
+            message: 'Les mots de passe ne correspondent pas'
+          };
+        }
+
+        // Mettre à jour le mot de passe via Supabase
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: data.password
+        });
+
+        if (updateError) {
+          return {
+            success: false,
+            message: updateError.message || 'Erreur lors de la mise à jour du mot de passe',
+            error: updateError.message
+          };
+        }
+
+        return {
+          success: true,
+          message: 'Mot de passe mis à jour avec succès. Vous pouvez maintenant vous connecter.'
+        };
+      }
+
+      // Fallback pour le mode local
       const email = this.db.verifyResetToken(data.token);
 
       if (!email) {

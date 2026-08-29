@@ -17,6 +17,7 @@ const ForgotPasswordPage: React.FC = () => {
   const { t } = useLanguage();
   const [method, setMethod] = useState<'email' | 'key'>('key');
   const [recoveryKey, setRecoveryKey] = useState('');
+  const [email, setEmail] = useState('');
   const [filePassword, setFilePassword] = useState('');
   const [pendingFileContent, setPendingFileContent] = useState<string | null>(null);
   const [manualConfirmNeeded, setManualConfirmNeeded] = useState(false);
@@ -82,7 +83,24 @@ const ForgotPasswordPage: React.FC = () => {
 
     try {
       if (method === 'email') {
-        setError(t('auth.emailRecoveryDisabledHint'));
+        if (!email) {
+          setError(t('auth.emailRequired'));
+          setIsLoading(false);
+          return;
+        }
+        
+        // Import authService pour la récupération par email
+        const { authService } = await import('../utils/authService');
+        const result = await authService.forgotPassword({ email: email });
+        
+        if (result.success) {
+          setSuccess(result.message || t('auth.passwordResetEmailSent'));
+          setTimeout(() => {
+            navigate('/login');
+          }, 3000);
+        } else {
+          setError(result.message || t('error.system'));
+        }
         return;
       }
 
@@ -133,9 +151,8 @@ const ForgotPasswordPage: React.FC = () => {
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center space-x-2 ${
                 method === 'email'
                   ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 opacity-60'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
               }`}
-              title={t('auth.emailRecoveryUnavailable')}
             >
               <Mail className="w-4 h-4" />
               <span>{t('auth.email')}</span>
@@ -158,9 +175,26 @@ const ForgotPasswordPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {method === 'email' ? (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
-                <p className="font-medium mb-1">{t('auth.emailRecoveryUnavailable')}</p>
-                <p>{t('auth.emailRecoveryDisabledHint')}</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('auth.email')}
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                      placeholder={t('auth.emailPlaceholder')}
+                      required
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('auth.passwordResetEmailHint')}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -244,10 +278,10 @@ const ForgotPasswordPage: React.FC = () => {
 
             <button
               type="submit"
-              disabled={isLoading || method === 'email'}
+              disabled={isLoading}
               className="w-full text-white py-3 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
             >
-              {isLoading ? t('status.loading') : t('button.validate')}
+              {isLoading ? t('status.loading') : (method === 'email' ? t('auth.sendResetEmail') : t('button.validate'))}
             </button>
           </form>
 

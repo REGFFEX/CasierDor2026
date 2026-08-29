@@ -39,6 +39,14 @@ const pickImage = (onPick: (dataUrl: string) => void) => {
   input.onchange = (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    
+    // Validation de la taille de l'image (20MB max)
+    const MAX_SIZE = 20 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      alert(`L'image ne doit pas dépasser 20MB. Taille actuelle: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onload = (re) => onPick(re.target?.result as string);
     reader.readAsDataURL(file);
