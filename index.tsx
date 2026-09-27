@@ -3,6 +3,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import './styles/crystal-design.css';
+import './styles/design-system.css';
 import './styles/scrollbar.css';
 
 const rootElement = document.getElementById('root');

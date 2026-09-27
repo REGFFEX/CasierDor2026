@@ -1,0 +1,134 @@
+/**
+ * Casier d'Or — Crystal 3D design tokens (mobile-first, iOS/macOS inspired)
+ */
+
+:root {
+  --crystal-primary: #1f4fd8;
+  --crystal-primary-deep: #142e7b;
+  --crystal-accent: #3b82f6;
+  --crystal-success: #22c55e;
+  --crystal-warning: #f59e0b;
+  --crystal-error: #ef4444;
+  --crystal-radius-sm: 12px;
+  --crystal-radius-md: 16px;
+  --crystal-radius-lg: 24px;
+  --crystal-radius-xl: 32px;
+  --crystal-blur: 20px;
+  --crystal-touch-min: 44px;
+  --crystal-nav-height: 72px;
+  --crystal-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.crystal-app-bg {
+    background-color: var(--bg-primary);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(31, 79, 216, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.08), transparent);
+  }
+
+  :root.dark .crystal-app-bg {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(31, 79, 216, 0.1), transparent);
+  }
+
+.crystal-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border-width: 1px;
+    transition: all 0.3s;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.72) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 8px 32px rgba(31, 79, 216, 0.06),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(var(--crystal-blur));
+    -webkit-backdrop-filter: blur(var(--crystal-blur));
+  }
+
+  :root.dark .crystal-card,
+  :root.dark .crystal-card-interactive {
+    background: linear-gradient(
+      145deg,
+      rgba(30, 41, 59, 0.85) 0%,
+      rgba(15, 23, 42, 0.75) 100%
+    );
+    border-color: rgba(148, 163, 184, 0.15);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 8px 32px rgba(0, 0, 0, 0.35);
+  }
+
+.crystal-card-interactive {
+    cursor: pointer;
+  }
+
+  .crystal-card-interactive:active {
+    transform: scale(0.98);
+  }
+
+  .crystal-card-interactive:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 12px 40px rgba(31, 79, 216, 0.1),
+      0 4px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+  }
+
+.crystal-panel {
+    border-radius: 1.5rem;
+    border-width: 1px;
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 20px 60px rgba(31, 79, 216, 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  :root.dark .crystal-panel {
+    background: rgba(30, 41, 59, 0.88);
+    border-color: rgba(71, 85, 105, 0.4);
+  }
+
+  .crystal-nav {
+    background: rgba(255, 255, 255, 0.82);
+    border-top: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding-bottom: max(0.5rem, var(--crystal-safe-bottom));
+  }
+
+  :root.dark .crystal-nav {
+    background: rgba(15, 23, 42, 0.88);
+    border-top-color: rgba(51, 65, 85, 0.6);
+  }
+
+  .crystal-header {
+    background: rgba(255, 255, 255, 0.75);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  :root.dark .crystal-header {
+    background: rgba(15, 23, 42, 0.8);
+    border-bottom-color: rgba(51, 65, 85, 0.5);
+  }
+
+  .crystal-touch-target {
+    min-height: var(--crystal-touch-min);
+    min-width: var(--crystal-touch-min);
+  }
+
+.crystal-glow-ring {
+  box-shadow: 0 0 0 1px rgba(31, 79, 216, 0.12), 0 0 24px rgba(31, 79, 216, 0.08);
+}

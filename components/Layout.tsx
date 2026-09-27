@@ -13,6 +13,7 @@ import { STANDARD_TEXTS } from '../types/professional';
 import { performFullBackup } from '../utils/backupUtils';
 import CompanyLogo from './CompanyLogo';
 import { useSidebar } from '../utils/sidebarContext';
+import SyncStatusBar from './design-system/SyncStatusBar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -367,21 +368,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isExpanded = !sidebarState.desktopCollapsed || sidebarState.sidebarHovered;
 
   return (
-    <div 
-      className="min-h-screen flex flex-col pb-20 md:pb-0 relative"
-      style={{
-        backgroundColor: '#F8FAFC',
-        backgroundImage: 'url("/logo/background.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
+    <div className="ds-app-bg min-h-screen flex flex-col relative">
       {/* Desktop Sidebar */}
       <aside
         onMouseEnter={() => setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
-        className={`hidden md:flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out no-print ${sidebarState.desktopCollapsed && !sidebarState.sidebarHovered ? 'w-20' : 'w-64'}`}
+        className={`hidden md:flex flex-col ds-sidebar h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out no-print ${sidebarState.desktopCollapsed && !sidebarState.sidebarHovered ? 'w-[72px]' : 'w-64'}`}
       >
         <div className={`flex flex-col h-full overflow-y-auto custom-scrollbar overflow-x-hidden p-4`}>
           <div className="flex items-center space-x-3 mb-10 mt-2 px-2">
@@ -431,133 +423,79 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* Mobile Bottom Ribbon - Responsive & Smart */}
+
+      {/* Mobile Bottom Navigation - Design System */}
       <nav
         onClick={handleRibbonTap}
         onTouchStart={handleRibbonTouchStart}
         onTouchMove={handleRibbonTouchMove}
         onTouchEnd={handleRibbonTouchEnd}
-        className={`md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 transition-all duration-300 z-[50] no-print ${screenWidth < 500 && !isRibbonExpanded ? 'py-2 px-2 shadow-sm' : 'py-3 px-2'
-          } ${isRibbonExpanded ? 'shadow-[0_-8px_24px_rgba(0,0,0,0.15)]' : ''
-          }`}
+        className="ds-bottom-nav md:hidden no-print"
       >
-        {/* Mode 1: Petit écran (<500px) - Scroll horizontal si nécessaire */}
+        {/* Compact mobile: scroll horizontal */}
         {screenWidth < 500 && !isRibbonExpanded && (
-          <div className="relative">
-            <div
-              className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide"
-              onScroll={handleRibbonContentScroll}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-            >
-              {mobileShortcuts.map((item) => (
+          <div className="flex overflow-x-auto scrollbar-hide w-full px-1" onScroll={handleRibbonContentScroll} onTouchStart={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}>
+            {mobileShortcuts.map(item => {
+              const active = location.pathname === item.path;
+              return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={(e) => e.stopPropagation()}
-                  className={`flex-shrink-0 flex flex-col items-center p-2 rounded-xl transition-all min-w-0 ${location.pathname === item.path ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'
-                    }`}
+                  onClick={e => e.stopPropagation()}
+                  className={`ds-bottom-nav-item flex-shrink-0 ${active ? 'active' : ''}`}
                 >
-                  <div className={`${location.pathname === item.path ? 'scale-110' : ''} transition-transform`}>
-                    {item.path === '/users' ? (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                        {item.icon}
-                      </div>
-                    ) : (
-                      item.icon
-                    )}
+                  <div className="ds-nav-icon-wrap">
+                    {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
                   </div>
-                  <span className="text-[8px] font-bold mt-1 text-center uppercase whitespace-nowrap">{item.label}</span>
+                  <span className="ds-nav-label">{item.label}</span>
                 </Link>
-              ))}
-              <div className="flex-shrink-0 flex items-center pl-2 text-gray-400 text-xs min-w-0">
-                <ChevronUp className="w-3 h-3" />
-              </div>
-            </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Mode 2: Petit écran (<500px) + Double-tap Expanded */}
+        {/* Expanded overlay */}
         {screenWidth < 500 && isRibbonExpanded && (
-          <div
-            className="max-h-[60vh] overflow-auto scrollbar-hide rounded-t-3xl border-t border-x border-blue-200 dark:border-blue-700/50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 mb-[-8px] shadow-[0_-12px_30px_rgba(0,0,0,0.2)] animate-slide-up"
-            onScroll={handleRibbonContentScroll}
-          >
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center justify-between border-b dark:border-slate-800 pb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">{t('nav.quickAccess')}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsRibbonExpanded(false); }}
-                  className="p-1.5 bg-gray-100 dark:bg-slate-800 rounded-full"
-                >
-                  <X className="w-3 h-3 text-gray-500" />
-                </button>
-              </div>
-
-              <div className="overflow-auto max-w-full pb-2 scrollbar-thin">
-                <div className="grid grid-cols-4 gap-4 min-w-[400px]">
-                  {mobileShortcuts.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={(e) => { e.stopPropagation(); setIsRibbonExpanded(false); }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all ${location.pathname === item.path
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900'
-                        : 'bg-gray-50 dark:bg-slate-800/50 text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                        }`}
-                    >
-                      <div className="mb-2">
-                        {item.path === '/users' ? (
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${location.pathname === item.path ? 'bg-white text-blue-600' : 'bg-gradient-to-br from-blue-400 to-blue-600 text-white'
-                            }`}>
-                            {item.icon}
-                          </div>
-                        ) : (
-                          React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-6 h-6' }) : item.icon
-                        )}
-                      </div>
-                      <span className="text-[9px] font-bold text-center uppercase leading-tight truncate w-full px-1">{item.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-center pt-2 border-t dark:border-slate-800">
-                <div className="text-[9px] text-gray-400 flex items-center space-x-1 italic">
-                  <ChevronUp className="w-3 h-3" />
-                  <span>{t('confirm.doubleTapToFold') || 'Double-tap pour replier'}</span>
-                </div>
-              </div>
+          <div className="fixed inset-x-0 bottom-0 ds-card-elevated rounded-t-3xl p-6 pb-[calc(1.5rem+var(--nav-safe))] animate-slide-up z-[51]">
+            <div className="flex items-center justify-between mb-4">
+              <span className="ds-section-title">{t('nav.quickAccess')}</span>
+              <button onClick={e => { e.stopPropagation(); setIsRibbonExpanded(false); }} className="ds-btn-icon ds-btn ds-btn-secondary">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {mobileShortcuts.map(item => {
+                const active = location.pathname === item.path;
+                return (
+                  <Link key={item.path} to={item.path} onClick={e => { e.stopPropagation(); setIsRibbonExpanded(false); }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${ active ? 'bg-[var(--c-brand)] text-white' : 'text-[var(--c-text-2)] hover:bg-[var(--c-brand-xlight)]'}`}>
+                    {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
+                    <span className="ds-nav-label">{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Mode 3: Écran moyen/grand (≥500px) */}
+        {/* Standard mobile (≥500px) */}
         {screenWidth >= 500 && (
-          <div className="flex justify-around items-center">
-            {mobileShortcuts.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={(e) => e.stopPropagation()}
-                className={`flex flex-col items-center p-2 rounded-xl transition-all ${location.pathname === item.path ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'
-                  }`}
-              >
-                <div className={`${location.pathname === item.path ? 'scale-110' : ''} transition-transform`}>
-                  {item.path === '/users' ? (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                      {item.icon}
-                    </div>
-                  ) : (
-                    item.icon
-                  )}
-                </div>
-                <span className="text-[9px] font-bold mt-1 uppercase tracking-tighter">{item.label}</span>
-              </Link>
-            ))}
+          <div className="flex justify-around w-full">
+            {mobileShortcuts.map(item => {
+              const active = location.pathname === item.path;
+              return (
+                <Link key={item.path} to={item.path} onClick={e => e.stopPropagation()} className={`ds-bottom-nav-item ${active ? 'active' : ''}`}>
+                  <div className="ds-nav-icon-wrap">
+                    {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
+                  </div>
+                  <span className="ds-nav-label">{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </nav>
+
 
       {/* Mobile Menu Drawer (Side) */}
       {sidebarState.mobileOpen && (
@@ -566,20 +504,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
             onClick={closeMobile}
           />
-          <div className="absolute left-0 top-0 bottom-0 w-[80%] max-w-[320px] bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
-            <div className="p-4 md:p-6 border-b dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="md" />
-                <span className="font-bold text-xl dark:text-white truncate max-w-[150px]">{company.companyName || APP_NAME}</span>
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
+            <div className="p-6 border-b dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
+                <span className="font-bold text-lg dark:text-white">{company.companyName || APP_NAME}</span>
               </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); closeMobile(); }} 
-                className="p-2 -mr-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-white rounded-full transition-colors active:scale-95"
-              >
-                <X className="w-6 h-6" />
+              <button onClick={closeMobile} className="p-2 bg-gray-100 dark:bg-slate-800 dark:text-white rounded-full active:scale-95">
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
               <nav className="space-y-1">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2">Principal</p>
                 {primaryNav.map(item => renderNavLink(item, closeMobile, true))}
@@ -616,22 +551,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       {/* Main Content Area Wrapper */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out min-w-0 ${sidebarState.desktopCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
-        
-        {/* Unified Top Header */}
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b dark:border-slate-800 px-4 py-4 flex items-center justify-between sticky top-0 z-30 transition-all duration-300 ease-in-out no-print">
-          <div className="flex items-center gap-4">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out min-w-0 pb-[calc(var(--nav-h)+var(--nav-safe))] md:pb-0 ${sidebarState.desktopCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+
+        {/* Top Header */}
+        <header className="ds-header no-print pt-[max(0px,env(safe-area-inset-top,0px))] gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <button
               onClick={toggleSidebar}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 transition-all"
+              className="crystal-touch-target flex items-center justify-center p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 rounded-xl active:scale-95 transition-all"
+              aria-label={t('menu.open') || 'Menu'}
             >
               {sidebarState.mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="flex items-center space-x-2 min-w-0">
               <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
-              <span className="font-bold text-base text-gray-800 dark:text-gray-100 truncate max-w-[150px]">{company.companyName || APP_NAME}</span>
+              <span className="font-bold text-base text-gray-800 dark:text-gray-100 truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
+                {company.companyName || APP_NAME}
+              </span>
             </div>
           </div>
+          <SyncStatusBar compact={screenWidth < 400} />
         </header>
 
         <main
@@ -639,20 +578,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto w-full flex-1">
+          <div className="ds-page-content max-w-7xl mx-auto w-full flex-1">
             {children}
           </div>
-
-          {/* Footer discret avec copyright */}
-          <footer className="bg-white dark:bg-slate-900 border-t dark:border-slate-800 py-4 px-4 text-center no-print">
-            <div className="max-w-7xl mx-auto">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {STANDARD_TEXTS.copyright}
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                {STANDARD_TEXTS.allRightsReserved}
-              </p>
-            </div>
+          {/* Footer */}
+          <footer className="py-4 px-6 text-center border-t border-[var(--c-border)] mt-auto no-print">
+            <p className="text-xs text-[var(--c-text-3)]">{STANDARD_TEXTS.copyright}</p>
           </footer>
         </main>
       </div>

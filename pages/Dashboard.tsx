@@ -19,6 +19,7 @@ import {
 } from '../utils/modules';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import { useConfirmAction } from '../hooks/useConfirmAction';
+import { CrystalCard } from '../components/design-system';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -127,64 +128,58 @@ const Dashboard: React.FC = () => {
     event.target.value = '';
   };
 
-  const StatCard = ({ title, value, icon, color, trend }: any) => (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-        {trend && (
-          <div className={`flex items-center mt-2 text-xs font-semibold ${trend > 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {trend > 0 ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-            <span>{Math.abs(trend)}% {t('dashboard.vsYesterday')}</span>
-          </div>
-        )}
+  const accentColors: Record<string, { bg: string; text: string; glow: string }> = {
+    'bg-blue-600':   { bg: 'rgba(31,79,216,0.08)',   text: '#1F4FD8', glow: 'rgba(31,79,216,0.20)' },
+    'bg-green-600':  { bg: 'rgba(22,163,74,0.08)',   text: '#16A34A', glow: 'rgba(22,163,74,0.20)' },
+    'bg-orange-600': { bg: 'rgba(234,88,12,0.08)',   text: '#EA580C', glow: 'rgba(234,88,12,0.20)' },
+    'bg-purple-600': { bg: 'rgba(147,51,234,0.08)',  text: '#9333EA', glow: 'rgba(147,51,234,0.20)' },
+  };
+
+  const StatCard = ({ title, value, icon, color, trend }: any) => {
+    const palette = accentColors[color] || accentColors['bg-blue-600'];
+    return (
+      <div className="ds-card p-4 flex items-center justify-between gap-4 ds-card-interactive">
+        <div className="flex-1 min-w-0">
+          <p className="ds-section-title mb-1">{title}</p>
+          <h3 className="text-2xl font-bold tracking-tight text-[var(--c-text)]">{value}</h3>
+          {trend && (
+            <div className={`flex items-center mt-1.5 text-xs font-semibold ${trend > 0 ? 'text-[var(--c-success)]' : 'text-[var(--c-error)]'}`}>
+              {trend > 0 ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+              <span>{Math.abs(trend)}% {t('dashboard.vsYesterday')}</span>
+            </div>
+          )}
+        </div>
+        <div className="w-12 h-12 rounded-[var(--r-lg)] flex items-center justify-center flex-shrink-0"
+          style={{ background: palette.bg, color: palette.text, boxShadow: `0 4px 16px ${palette.glow}` }}>
+          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : icon}
+        </div>
       </div>
-      <div className={`p-4 rounded-xl ${color} bg-opacity-10 text-${color.split('-')[1]}-600`}>
-        {icon}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('dashboard.subtitle')}</p>
+          <h1 className="ds-page-title">{t('dashboard.title')}</h1>
+          <p className="ds-page-subtitle mt-1">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center flex-wrap gap-2">
-          <button
-            onClick={handleExportData}
-            className="btn-3d flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-bold"
-            title={t('dashboard.export')}
-          >
+          <button onClick={handleExportData} className="ds-btn ds-btn-secondary ds-btn-sm gap-2">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">{t('dashboard.export')}</span>
           </button>
-          <button
-            onClick={() => {
-              if (!isAdmin) {
-                alert(t('settings.sessionAdmin'));
-                return;
-              }
-              fileInputRef.current?.click();
-            }}
-            className="btn-3d flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-bold"
-            title={t('dashboard.import')}
-          >
+          <button onClick={() => { if (!isAdmin) { alert(t('settings.sessionAdmin')); return; } fileInputRef.current?.click(); }} className="ds-btn ds-btn-secondary ds-btn-sm gap-2">
             <UploadCloud className="w-4 h-4" />
             <span className="hidden sm:inline">{t('dashboard.import')}</span>
           </button>
-          <button
-            onClick={() => alert(t('dashboard.syncWip'))}
-            className="btn-3d flex items-center space-x-2 bg-blue-600 px-4 py-2 rounded-xl shadow-sm border border-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-bold"
-            title={t('dashboard.syncBtn')}
-          >
-            <CloudSync className="w-4 h-4" />
+          <button onClick={() => alert(t('dashboard.syncWip'))} className="ds-btn ds-btn-primary ds-btn-sm gap-2">
+            <Wifi className="w-4 h-4" />
             <span className="hidden sm:inline">{t('dashboard.syncBtn')}</span>
           </button>
-          <div className="flex items-center space-x-3 text-sm font-medium bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-gray-600">
-            <Clock className="w-4 h-4" />
+          <div className="ds-card flex items-center gap-2 px-3 py-2 text-xs text-[var(--c-text-2)] font-medium">
+            <Clock className="w-4 h-4 text-[var(--c-text-3)]" />
             <span className="hidden lg:inline">{formatDateTime(new Date(), language, { includeTime: true, dateStyle: 'full', timeStyle: 'short' })}</span>
             <span className="lg:hidden">{formatDateTime(new Date(), language, { includeTime: true, dateStyle: 'short', timeStyle: 'short' })}</span>
           </div>
@@ -192,142 +187,113 @@ const Dashboard: React.FC = () => {
       </div>
       <input type="file" ref={fileInputRef} onChange={handleImportData} accept=".json,application/json" className="hidden" />
 
-      {/* Bannière de l'entreprise / Photo du bâtiment */}
+      {/* Photo bâtiment */}
       {settings.buildingImage && (
-        <div className="w-full h-48 md:h-64 rounded-[2rem] overflow-hidden relative shadow-lg animate-in fade-in slide-in-from-bottom-4">
+        <div className="w-full h-44 md:h-60 rounded-[var(--r-2xl)] overflow-hidden relative shadow-lg">
           <img src={settings.buildingImage} alt={t('dashboard.building')} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
-             <h2 className="text-white text-2xl md:text-3xl font-black drop-shadow-lg">{settings.name || 'Notre Entreprise'}</h2>
-             {settings.address && <p className="text-white/90 text-sm font-bold flex items-center mt-1"><MapPin className="w-4 h-4 mr-1" /> {settings.address}</p>}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 md:p-8">
+            <h2 className="text-white text-xl md:text-3xl font-black drop-shadow-lg">{settings.name || 'Notre Entreprise'}</h2>
+            {settings.address && <p className="text-white/80 text-sm flex items-center mt-1 gap-1"><MapPin className="w-3.5 h-3.5" />{settings.address}</p>}
           </div>
         </div>
       )}
 
+      {/* Accès rapide */}
       {settings.showDashboardShortcuts !== false && shortcutItems.length > 0 && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="ds-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <LayoutGrid className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-bold text-gray-900">{t('dashboard.shortcuts')}</h2>
+            <LayoutGrid className="w-4 h-4 text-[var(--c-brand)]" />
+            <h2 className="font-bold text-[var(--c-text)] text-base">{t('dashboard.shortcuts')}</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {shortcutItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`btn-3d flex flex-col items-center p-4 rounded-2xl bg-white hover:${item.bgColor?.split(' ')[0] || 'bg-blue-50'} border-b-4 ${item.borderColor || 'border-blue-600'} shadow-sm transition-all overflow-hidden relative group`}
-              >
-                <div className={`mb-2 ${item.color || 'text-blue-600'} group-hover:scale-110 transition-transform`}>{item.icon}</div>
-                <span className="text-[10px] font-bold text-gray-700 text-center uppercase leading-tight z-10">{item.label}</span>
-                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${item.bgColor?.split(' ')[0] || 'bg-blue-50'}`} />
+              <Link key={item.path} to={item.path}
+                className="ds-card-interactive flex flex-col items-center gap-2 p-3 rounded-[var(--r-lg)] bg-[var(--c-surface-2)] hover:bg-[var(--c-brand-xlight)] group transition-all">
+                <div className="text-[var(--c-brand)] group-hover:scale-110 transition-transform">{item.icon}</div>
+                <span className="text-[10px] font-bold text-[var(--c-text-2)] group-hover:text-[var(--c-brand)] text-center uppercase leading-tight">{item.label}</span>
               </Link>
             ))}
           </div>
           {location.state?.moduleDisabled && (
-            <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2">
-              {t('modules.routeDisabled')}
-            </p>
+            <p className="mt-3 ds-alert ds-alert-warning text-xs">{t('modules.routeDisabled')}</p>
           )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title={t('dashboard.salesToday')}
-          value={<CurrencyDisplay amount={stats.dailyTotal} from="XAF" />}
-          icon={<TrendingUp className="w-6 h-6" />}
-          color="bg-blue-600"
-          trend={12}
-        />
-        <StatCard
-          title={t('dashboard.salesCount')}
-          value={stats.saleCount}
-          icon={<ShoppingCart className="w-6 h-6" />}
-          color="bg-green-600"
-        />
-        <StatCard
-          title={t('dashboard.stockCritical')}
-          value={stats.criticalCount}
-          icon={<AlertCircle className="w-6 h-6" />}
-          color="bg-orange-600"
-        />
-        <StatCard
-          title={t('dashboard.totalProducts')}
-          value={stats.activeProducts}
-          icon={<Package className="w-6 h-6" />}
-          color="bg-purple-600"
-        />
+      {/* Stats cards */}
+      <div className="ds-grid-stats">
+        <StatCard title={t('dashboard.salesToday')} value={<CurrencyDisplay amount={stats.dailyTotal} from="XAF" />} icon={<TrendingUp />} color="bg-blue-600" trend={12} />
+        <StatCard title={t('dashboard.salesCount')} value={stats.saleCount} icon={<ShoppingCart />} color="bg-green-600" />
+        <StatCard title={t('dashboard.stockCritical')} value={stats.criticalCount} icon={<AlertCircle />} color="bg-orange-600" />
+        <StatCard title={t('dashboard.totalProducts')} value={stats.activeProducts} icon={<Package />} color="bg-purple-600" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">{t('dashboard.recentSales')}</h2>
-            <button onClick={() => navigate('/history')} className="text-sm text-blue-600 font-semibold hover:underline">{t('dashboard.viewAll')}</button>
+      {/* Listes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4">
+        {/* Ventes récentes */}
+        <div className="ds-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-[var(--c-text)] text-base">{t('dashboard.recentSales')}</h2>
+            <button onClick={() => navigate('/history')} className="ds-btn ds-btn-ghost ds-btn-sm text-xs">{t('dashboard.viewAll')}</button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-1">
             {stats.recentSales.length > 0 ? (
               stats.recentSales.map(sale => (
-                <div key={sale.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${sale.status === SaleStatus.VALIDATED ? 'bg-green-500' : 'bg-gray-400'
-                      }`}>
-                      {sale.saleNumber.slice(-1)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm">{sale.saleNumber}</p>
-                      <p className="text-xs text-gray-400">{new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {sale.clientName || t('dashboard.punctualClient')}</p>
-                    </div>
+                <div key={sale.id} className="ds-list-item">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white flex-shrink-0 ${sale.status === SaleStatus.VALIDATED ? 'bg-[var(--c-success)]' : 'bg-[var(--c-text-3)]'}`}>
+                    {sale.saleNumber.slice(-1)}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm"><CurrencyDisplay amount={sale.total} from="XAF" /></p>
-                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${sale.status === SaleStatus.VALIDATED ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                      {sale.status}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[var(--c-text)] truncate">{sale.saleNumber}</p>
+                    <p className="text-xs text-[var(--c-text-3)] truncate">
+                      {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {sale.clientName || t('dashboard.punctualClient')}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-sm text-[var(--c-text)]"><CurrencyDisplay amount={sale.total} from="XAF" /></p>
+                    <span className={`ds-badge text-[9px] ${sale.status === SaleStatus.VALIDATED ? 'ds-badge-success' : 'ds-badge-neutral'}`}>{sale.status}</span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-10">
-                <p className="text-gray-400 text-sm">{t('dashboard.noSalesToday')}</p>
-              </div>
+              <div className="text-center py-10 text-[var(--c-text-3)] text-sm">{t('dashboard.noSalesToday')}</div>
             )}
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">{t('dashboard.stockCritical')}</h2>
-            <button onClick={() => navigate('/stock')} className="text-sm text-blue-600 font-semibold hover:underline">{t('dashboard.manageStock')}</button>
+        {/* Stock critique */}
+        <div className="ds-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-[var(--c-text)] text-base">{t('dashboard.stockCritical')}</h2>
+            <button onClick={() => navigate('/stock')} className="ds-btn ds-btn-ghost ds-btn-sm text-xs">{t('dashboard.manageStock')}</button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-1">
             {stats.criticalProducts.length > 0 ? (
               stats.criticalProducts.map(product => (
-                <div key={product.id} className="flex items-center justify-between p-3 rounded-xl border border-orange-100 bg-orange-50/30">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-orange-100">
-                      <Package className="w-5 h-5 text-orange-500" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm text-gray-900">{product.name}</p>
-                      <p className="text-xs text-gray-500">SKU: {product.sku} • {product.type}</p>
-                    </div>
+                <div key={product.id} className="ds-list-item">
+                  <div className="w-9 h-9 rounded-[var(--r-md)] flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(234,88,12,0.08)' }}>
+                    <Package className="w-4 h-4 text-orange-500" />
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-orange-600">{product.stock}</p>
-                    <p className="text-[10px] text-gray-400 font-medium">{t('stock.threshold')}: {product.criticalThreshold}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[var(--c-text)] truncate">{product.name}</p>
+                    <p className="text-xs text-[var(--c-text-3)] truncate">SKU: {product.sku}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-black text-orange-500">{product.stock}</p>
+                    <p className="text-[10px] text-[var(--c-text-3)]">/ {product.criticalThreshold}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 space-y-3">
-                <CheckCircle2 className="w-12 h-12 text-green-500 opacity-20" />
-                <p className="text-gray-400 text-sm">{t('dashboard.allInOrder')}</p>
+              <div className="flex flex-col items-center justify-center py-10 gap-3">
+                <CheckCircle2 className="w-10 h-10 text-[var(--c-success)] opacity-30" />
+                <p className="text-[var(--c-text-3)] text-sm">{t('dashboard.allInOrder')}</p>
               </div>
             )}
           </div>
         </div>
       </div>
+
       <ConfirmActionModal
         open={!!pending}
         actionId={pending?.actionId ?? 'importJson'}
@@ -342,4 +308,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;
