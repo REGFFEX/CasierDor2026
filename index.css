@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Unified List System Styles */
+@import './styles/unified-list.css';
+
 @layer base {
   /* Thème clair (par défaut) */
   :root {
