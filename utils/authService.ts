@@ -36,11 +36,14 @@ type SupabaseUserRow = {
 };
 
 function isSupabaseConfigured(): boolean {
-  const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-  const supabaseAnonKey =
-    (import.meta as any).env.VITE_SUPABASE_ANON_KEY ||
-    (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  return Boolean(supabaseUrl && supabaseAnonKey);
+  try {
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
+    const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 
+                           (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+    return Boolean(supabaseUrl && supabaseAnonKey);
+  } catch {
+    return false;
+  }
 }
 
 function mapSupabaseUserRow(sbUser: SupabaseUserRow, passwordHash = ''): User {
@@ -304,7 +307,7 @@ class LocalDatabase {
   // Nettoyer les tokens expirés
   cleanupExpiredTokens() {
     const now = Date.now();
-    for (const [token, data] of this.passwordResetTokens.entries()) {
+    for (const [token, data] of Array.from(this.passwordResetTokens.entries())) {
       if (data.expires < now) {
         this.passwordResetTokens.delete(token);
       }
@@ -775,10 +778,10 @@ export class AuthService {
       };
 
     } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: AUTH_ERROR_MESSAGES.NETWORK_ERROR,
-        error: error instanceof Error ? error.message : 'Erreur inconnue'
+        message: `Une erreur est survenue lors de la création du compte. Détail\u00a0: ${detail}`
       };
     }
   }
