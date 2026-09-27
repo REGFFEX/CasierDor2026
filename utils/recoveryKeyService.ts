@@ -59,7 +59,6 @@ export async function validateRecoveryKey(recoveryKey: string): Promise<boolean>
   const settings = getStoreData<StoreSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
   const config = settings.recoveryConfig;
   if (!config) return false;
-  if (config.keyUsedAt) return false;
 
   const admin = authService.findPrimaryAdmin();
   const accountId = admin?.id || 'default-account';
@@ -75,13 +74,31 @@ export async function validateRecoveryKey(recoveryKey: string): Promise<boolean>
     if (!validateRecoveryKeyChecksum(recoveryKey) && recoveryKey.includes('CDOR')) {
       return false;
     }
-    return verifyRecoveryKeyAgainstStorage(recoveryKey, accountId, active.keyHash, active.keySalt);
+    const isValid = await verifyRecoveryKeyAgainstStorage(recoveryKey, accountId, active.keyHash, active.keySalt);
+    if (isValid) {
+      // Mark key as used after successful validation
+      setStoreData(STORAGE_KEYS.SETTINGS, {
+        ...settings,
+        recoveryConfig: { ...active, keyUsedAt: Date.now() },
+        updatedAt: Date.now(),
+      });
+    }
+    return isValid;
   }
 
   if (active.key) {
     const norm = recoveryKey.replace(/[\s-]/g, '').toUpperCase();
     const stored = active.key.replace(/[\s-]/g, '').toUpperCase();
-    return norm.includes(stored) || stored.includes(norm);
+    const isValid = norm.includes(stored) || stored.includes(norm);
+    if (isValid) {
+      // Mark key as used after successful validation
+      setStoreData(STORAGE_KEYS.SETTINGS, {
+        ...settings,
+        recoveryConfig: { ...active, keyUsedAt: Date.now() },
+        updatedAt: Date.now(),
+      });
+    }
+    return isValid;
   }
 
   return false;
@@ -99,6 +116,7 @@ export async function rotateRecoveryKey(
   const config: RecoveryConfig = {
     method: settings.recoveryConfig?.method || method,
     ...hashed,
+    keyUsedAt: undefined,
   };
 
   setStoreData(STORAGE_KEYS.SETTINGS, {
