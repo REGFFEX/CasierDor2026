@@ -32,6 +32,8 @@ const AccountChoicePage = React.lazy(() => import('./pages/AccountChoicePage'));
 const RecoverySetupPage = React.lazy(() => import('./pages/RecoverySetupPage'));
 const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const StorageSetupPage = React.lazy(() => import('./pages/StorageSetupPage'));
+const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));
+const TestDataPage = React.lazy(() => import('./pages/TestDataPage'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
@@ -45,6 +47,9 @@ import { initializeStore } from './store';
 import { useAuth } from './utils/authContext';
 import { initDirectoryStructure } from './utils/fileManager';
 import { syncEngine } from './utils/syncEngine';
+
+import { getStoreData, STORAGE_KEYS, DEFAULT_SETTINGS } from './store';
+import { StoreSettings } from './types';
 
 // Composant pour protéger les routes
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -84,6 +89,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <Navigate to="/login" replace />;
   }
 
+  // Vérifier l'onboarding
+  const settings = getStoreData<StoreSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+  if (!(settings as any).onboardingCompleted && window.location.hash !== '#/onboarding') {
+    console.log('[ProtectedRoute] Redirection vers /onboarding');
+    return <Navigate to="/onboarding" replace />;
+  }
+
   console.log('[ProtectedRoute] Accès autorisé');
   return <>{children}</>;
 };
@@ -108,6 +120,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 import { SidebarProvider } from './utils/sidebarContext';
+import { ConnectivityProvider } from './utils/connectivityContext';
 
 function App() {
   useEffect(() => {
@@ -135,6 +148,7 @@ function App() {
     <LanguageProvider>
       <ThemeProvider>
         <AuthProvider>
+          <ConnectivityProvider>
           <SidebarProvider>
           <HashRouter>
             <React.Suspense fallback={<PageLoader />}>
@@ -182,6 +196,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/recovery-setup"
@@ -190,6 +212,11 @@ function App() {
                     <RecoverySetupPage />
                   </ProtectedRoute>
                 }
+              />
+
+              <Route
+                path="/test-data"
+                element={<TestDataPage />}
               />
 
               {/* Routes protégées */}
@@ -228,6 +255,7 @@ function App() {
             </React.Suspense>
           </HashRouter>
           </SidebarProvider>
+          </ConnectivityProvider>
         </AuthProvider>
       </ThemeProvider>
     </LanguageProvider>

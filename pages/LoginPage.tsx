@@ -6,7 +6,7 @@ import { useAuth } from '../utils/authContext';
 import { LoginCredentials, StoreSettings, UserRole } from '../types';
 import { getStoreData, setStoreData, STORAGE_KEYS, DEFAULT_SETTINGS } from '../store';
 import { checkLockout } from '../utils/securityUtils';
-import AuthLayout from '../components/auth/AuthLayout';
+import AuthShell from '../components/auth/AuthShell';
 import AuthCrystalButton from '../components/auth/AuthCrystalButton';
 import { resolveCompanyProfile, getBusinessTypeLabel } from '../utils/companyProfile';
 import { isStorageConfigured } from '../utils/storageDirectory';
@@ -89,9 +89,15 @@ const LoginPage: React.FC = () => {
   const companyLine = [company.companyName, activityLabel].filter(Boolean).join(' — ');
 
   return (
-    <AuthLayout
+    <AuthShell
+      icon={
+        <span className="font-bold text-xl">
+          {company.companyName ? company.companyName.substring(0, 2).toUpperCase() : 'CO'}
+        </span>
+      }
       title={t('auth.login')}
       subtitle={companyLine || activityLabel}
+      maxWidth="md"
     >
 
           {error && (
@@ -153,11 +159,6 @@ const LoginPage: React.FC = () => {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              <div className="mt-1 text-right">
-                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400">
-                  {t('auth.forgotPassword')}
-                </Link>
-              </div>
             </div>
 
             <div className="flex items-center">
@@ -178,17 +179,6 @@ const LoginPage: React.FC = () => {
             </AuthCrystalButton>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <Link
-                to="/forgot-password"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </p>
-          </div>
-
           {settings.enableTestAccounts && (
             <div className="mt-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('auth.testAccountsTitle')}</p>
@@ -200,9 +190,16 @@ const LoginPage: React.FC = () => {
                   <strong>{t('auth.testUserLabel')}</strong> user@casierdor.app / user123
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => navigate('/test-data')}
+                className="mt-3 w-full py-2 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              >
+                🚀 Générer des données de test complètes
+              </button>
             </div>
           )}
-    </AuthLayout>
+    </AuthShell>
   );
 };
 
