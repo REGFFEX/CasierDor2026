@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronRight, LogOut, LayoutDashboard, PlusCircle, Package, Box, History, Moon, Sun, User, ChevronUp, AlertTriangle, Download, Shield, ShieldOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Menu, X, ChevronRight, LogOut, LayoutDashboard, PlusCircle, Package, Box, History, Moon, Sun, User, ChevronUp, AlertTriangle, Download, Shield, ShieldOff, Loader2, CheckCircle, XCircle, Grid } from 'lucide-react';
 import { getNavigationItems, APP_NAME, type NavigationItem } from '../constants';
 import { filterNavigationItems, trackModuleVisit } from '../utils/modules';
 import { useTheme } from '../utils/themeContext';
@@ -358,8 +358,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     );
   };
 
-  // Raccourcis pour le ruban mobile - Complété avec toutes les pages
-  const mobileShortcuts = navigationItems.map(item => ({
+  // Raccourcis pour le ruban mobile - 4 items principaux + bouton "Plus"
+  const primaryShortcuts = primaryNav.map(item => ({
+    label: item.label,
+    path: item.path,
+    icon: item.icon
+  }));
+  const allShortcuts = navigationItems.map(item => ({
     label: item.label,
     path: item.path,
     icon: item.icon
@@ -424,25 +429,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
 
-      {/* Mobile Bottom Navigation - Design System */}
-      <nav
-        onClick={handleRibbonTap}
-        onTouchStart={handleRibbonTouchStart}
-        onTouchMove={handleRibbonTouchMove}
-        onTouchEnd={handleRibbonTouchEnd}
-        className="ds-bottom-nav md:hidden no-print"
-      >
-        {/* Compact mobile: scroll horizontal */}
-        {screenWidth < 500 && !isRibbonExpanded && (
-          <div className="flex overflow-x-auto scrollbar-hide w-full px-1" onScroll={handleRibbonContentScroll} onTouchStart={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}>
-            {mobileShortcuts.map(item => {
+      {/* Mobile Bottom Navigation — iOS-style tab bar */}
+      <nav className="ds-bottom-nav md:hidden no-print">
+        {/* Tab bar: 4 primary items + "More" button */}
+        {!isRibbonExpanded && (
+          <div className="flex justify-around w-full">
+            {primaryShortcuts.map(item => {
               const active = location.pathname === item.path;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={e => e.stopPropagation()}
-                  className={`ds-bottom-nav-item flex-shrink-0 ${active ? 'active' : ''}`}
+                  className={`ds-bottom-nav-item ${active ? 'active' : ''}`}
                 >
                   <div className="ds-nav-icon-wrap">
                     {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
@@ -451,47 +449,44 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               );
             })}
+            {/* More button — opens expanded overlay */}
+            <button
+              onClick={() => setIsRibbonExpanded(true)}
+              className="ds-bottom-nav-item"
+            >
+              <div className="ds-nav-icon-wrap">
+                <Grid className="w-5 h-5" />
+              </div>
+              <span className="ds-nav-label">Plus</span>
+            </button>
           </div>
         )}
 
-        {/* Expanded overlay */}
-        {screenWidth < 500 && isRibbonExpanded && (
+        {/* Expanded overlay — all navigation items */}
+        {isRibbonExpanded && (
           <div className="fixed inset-x-0 bottom-0 ds-card-elevated rounded-t-3xl p-6 pb-[calc(1.5rem+var(--nav-safe))] animate-slide-up z-[51]">
             <div className="flex items-center justify-between mb-4">
-              <span className="ds-section-title">{t('nav.quickAccess')}</span>
-              <button onClick={e => { e.stopPropagation(); setIsRibbonExpanded(false); }} className="ds-btn-icon ds-btn ds-btn-secondary">
+              <span className="ds-section-title">{t('nav.quickAccess') || 'Navigation'}</span>
+              <button onClick={() => setIsRibbonExpanded(false)} className="ds-btn-icon ds-btn ds-btn-secondary">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              {mobileShortcuts.map(item => {
+            <div className="grid grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto ds-no-scrollbar">
+              {allShortcuts.map(item => {
                 const active = location.pathname === item.path;
                 return (
-                  <Link key={item.path} to={item.path} onClick={e => { e.stopPropagation(); setIsRibbonExpanded(false); }}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${ active ? 'bg-[var(--c-brand)] text-white' : 'text-[var(--c-text-2)] hover:bg-[var(--c-brand-xlight)]'}`}>
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsRibbonExpanded(false)}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${active ? 'bg-[var(--c-brand)] text-white' : 'text-[var(--c-text-2)] hover:bg-[var(--c-brand-xlight)]'}`}
+                  >
                     {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
                     <span className="ds-nav-label">{item.label}</span>
                   </Link>
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* Standard mobile (≥500px) */}
-        {screenWidth >= 500 && (
-          <div className="flex justify-around w-full">
-            {mobileShortcuts.map(item => {
-              const active = location.pathname === item.path;
-              return (
-                <Link key={item.path} to={item.path} onClick={e => e.stopPropagation()} className={`ds-bottom-nav-item ${active ? 'active' : ''}`}>
-                  <div className="ds-nav-icon-wrap">
-                    {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
-                  </div>
-                  <span className="ds-nav-label">{item.label}</span>
-                </Link>
-              );
-            })}
           </div>
         )}
       </nav>
@@ -551,7 +546,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       {/* Main Content Area Wrapper */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out min-w-0 pb-[calc(var(--nav-h)+var(--nav-safe))] md:pb-0 ${sidebarState.desktopCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out min-w-0 overflow-x-hidden pb-[calc(var(--nav-h)+var(--nav-safe))] md:pb-0 ${sidebarState.desktopCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
 
         {/* Top Header */}
         <header className="ds-header no-print pt-[max(0px,env(safe-area-inset-top,0px))] gap-3">
@@ -574,7 +569,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </header>
 
         <main
-          className="flex-1 flex flex-col w-full"
+          className="flex-1 flex flex-col w-full overflow-x-hidden"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >

@@ -121,6 +121,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
@@ -132,6 +134,8 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* ═══════════════════════════════════════════════
@@ -155,26 +159,77 @@ body {
    CARTES CRYSTAL
 ═══════════════════════════════════════════════ */
 .ds-card {
-  background: var(--c-surface);
+  background: linear-gradient(
+    135deg,
+    var(--c-surface) 0%,
+    color-mix(in srgb, var(--c-surface) 95%, var(--c-surface-2)) 100%
+  );
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-inset-top), var(--shadow-sm);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.80),
+    inset -1px -1px 1px rgba(0, 0, 0, 0.02),
+    var(--shadow-sm);
   transition: transform var(--dur-normal) var(--ease),
               box-shadow var(--dur-normal) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+:root.dark .ds-card {
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.05),
+    inset -1px -1px 1px rgba(0, 0, 0, 0.10),
+    var(--shadow-sm);
 }
 
 .ds-card-glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(var(--blur-md));
-  -webkit-backdrop-filter: blur(var(--blur-md));
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.68) 50%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+  backdrop-filter: blur(var(--blur-md)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.60);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-inset-top), var(--shadow-md);
+  box-shadow:
+    inset 1px 1px 1px rgba(255, 255, 255, 0.95),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.03),
+    0 8px 32px rgba(31, 79, 216, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+/* iOS glass: bright light from top-left, soft shadow to bottom-right */
+.ds-card-glass::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60%; height: 60%;
+  background: radial-gradient(ellipse at top left, rgba(255,255,255,0.25), transparent 70%);
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 :root.dark .ds-card-glass {
-  background: rgba(17, 24, 39, 0.75);
-  border-color: rgba(148, 163, 184, 0.10);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.82) 0%,
+    rgba(17, 24, 39, 0.72) 50%,
+    rgba(15, 23, 42, 0.65) 100%
+  );
+  border-color: rgba(148, 163, 184, 0.12);
+  box-shadow:
+    inset 1px 1px 1px rgba(255, 255, 255, 0.08),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark .ds-card-glass::before {
+  background: radial-gradient(ellipse at top left, rgba(255,255,255,0.06), transparent 70%);
 }
 
 .ds-card-elevated {
@@ -233,11 +288,11 @@ body {
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(var(--blur-md));
-  -webkit-backdrop-filter: blur(var(--blur-md));
-  border-top: 1px solid var(--c-border);
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.06);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.50);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.60);
   padding-bottom: var(--nav-safe);
   height: calc(var(--nav-h) + var(--nav-safe));
   display: flex;
@@ -245,8 +300,9 @@ body {
 }
 
 :root.dark .ds-bottom-nav {
-  background: rgba(8, 14, 26, 0.90);
+  background: rgba(8, 14, 26, 0.82);
   border-top-color: rgba(148, 163, 184, 0.08);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .ds-bottom-nav-item {
@@ -255,14 +311,15 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: var(--sp-sm) var(--sp-xs);
+  gap: 2px;
+  padding: var(--sp-xs);
   color: var(--c-text-3);
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease);
   min-height: 44px;
   border-radius: var(--r-md);
-  margin: 6px 2px;
+  margin: 4px 1px;
+  min-width: 0;
 }
 
 .ds-bottom-nav-item.active {
@@ -271,27 +328,33 @@ body {
 
 .ds-bottom-nav-item.active .ds-nav-icon-wrap {
   background: var(--c-brand-xlight);
+  box-shadow: 0 2px 8px rgba(31, 79, 216, 0.15);
 }
 
 .ds-nav-icon-wrap {
-  width: 36px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--r-sm);
   transition: background var(--dur-fast) var(--ease),
-              transform var(--dur-fast) var(--ease-spring);
+              transform var(--dur-fast) var(--ease-spring),
+              box-shadow var(--dur-fast) var(--ease);
 }
 
 .ds-bottom-nav-item:active .ds-nav-icon-wrap {
-  transform: scale(0.88);
+  transform: scale(0.85);
 }
 
 .ds-nav-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ═══════════════════════════════════════════════
@@ -767,6 +830,8 @@ body {
 .ds-page-content {
   padding: var(--sp-lg);
   padding-bottom: calc(var(--nav-h) + var(--nav-safe) + var(--sp-lg));
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 @media (min-width: 768px) {
@@ -774,6 +839,88 @@ body {
     padding: var(--sp-3xl);
     padding-bottom: var(--sp-3xl);
   }
+}
+
+/* ═══════════════════════════════════════════════
+   OVERFLOW PREVENTION UTILITIES (iOS-style)
+═══════════════════════════════════════════════ */
+.ds-overflow-hidden { overflow: hidden; }
+.ds-overflow-x-hidden { overflow-x: hidden; }
+.ds-min-w-0 { min-width: 0; }
+.ds-max-w-full { max-width: 100%; }
+.ds-w-full { width: 100%; }
+
+.ds-text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.ds-text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ds-no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.ds-no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Flex children should always be able to shrink */
+.ds-flex-min-w-0 > * { min-width: 0; }
+
+/* iOS-style segmented control */
+.ds-segmented {
+  display: flex;
+  background: var(--c-surface-2);
+  border-radius: var(--r-md);
+  padding: 3px;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.ds-segmented-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--r-sm);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--c-text-2);
+  transition: all var(--dur-fast) var(--ease);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-segmented-item.active {
+  background: var(--c-surface);
+  color: var(--c-brand);
+  box-shadow: var(--shadow-xs);
+}
+
+/* iOS-style large title header */
+.ds-large-title {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--c-text);
+  line-height: 1.1;
+}
+
+/* Hide text on very small screens, show only icons */
+@media (max-width: 380px) {
+  .ds-hide-text-xs { display: none; }
+  .ds-icon-only-xs { padding: 0; width: 44px; }
+  .ds-icon-only-xs .ds-btn-text { display: none; }
 }
 
 /* ═══════════════════════════════════════════════
