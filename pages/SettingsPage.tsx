@@ -529,7 +529,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 overflow-x-hidden max-w-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div className="flex items-center space-x-4">
           <PageBackButton />
@@ -698,7 +698,7 @@ const SettingsPage: React.FC = () => {
                                   key={algo}
                                   type="button"
                                   onClick={() => handleAlgorithmChange(algo as any)}
-                                  className={`py-3 px-4 rounded-lg text-xs font-bold uppercase transition-all border min-w-[80px] ${encryptionConfig.algorithm === algo
+                                  className={`py-3 px-4 rounded-lg text-xs font-bold uppercase transition-all border ${encryptionConfig.algorithm === algo
                                     ? 'bg-blue-600 text-white border-blue-600'
                                     : 'bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-slate-600 hover:border-blue-400'
                                     }`}
@@ -765,7 +765,7 @@ const SettingsPage: React.FC = () => {
                           type="button"
                           onClick={handleSecurityToggle}
                           disabled={isProcessing}
-                          className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2 min-w-[120px] min-h-[48px] flex-shrink-0 ${authDisabled
+                          className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2 sm:min-w-[120px] min-h-[48px] ${authDisabled
                             ? 'bg-green-500 hover:bg-green-600 text-white'
                             : 'bg-red-500 hover:bg-red-600 text-white'
                             } disabled:opacity-50`}
@@ -1295,7 +1295,7 @@ const SettingsPage: React.FC = () => {
                   type="button"
                   onClick={handleGenericExport}
                   disabled={isProcessing}
-                  className="btn-3d flex-1 min-w-[160px] py-4 px-5 bg-cyan-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-200/50 disabled:opacity-50"
+                  className="btn-3d flex-1 sm:min-w-[160px] py-4 px-5 bg-cyan-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-200/50 disabled:opacity-50"
                 >
                   {isProcessing ? <Loader2 className="w-5 h-5 shrink-0 animate-spin" /> : <Download className="w-5 h-5 shrink-0" />}
                   {t('settings.btnExport') || 'Exporter'}
@@ -1304,7 +1304,7 @@ const SettingsPage: React.FC = () => {
                   type="button"
                   onClick={() => handleActionWithConfirmation('restoreData', () => jsonImportRef.current?.click())}
                   disabled={isProcessing}
-                  className="btn-3d flex-1 min-w-[160px] py-4 px-5 bg-white border-2 border-cyan-200 text-cyan-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="btn-3d flex-1 sm:min-w-[160px] py-4 px-5 bg-white border-2 border-cyan-200 text-cyan-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <UploadCloud className="w-5 h-5 shrink-0" />
                   {t('settings.btnImport') || 'Importer'}
