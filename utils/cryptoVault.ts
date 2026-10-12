@@ -62,7 +62,9 @@ export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
 
 function computeKeyChecksum(bytes: Uint8Array): string {
   let sum = 0;
-  for (const b of bytes) sum = (sum + b) & 0xffff;
+  for (let i = 0; i < bytes.length; i++) {
+    sum = (sum + bytes[i]) & 0xffff;
+  }
   return sum.toString(16).padStart(4, '0').toUpperCase();
 }
 

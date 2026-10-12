@@ -56,6 +56,7 @@ export interface Sale {
   isSynced?: boolean;
   createdAt?: number;
   updatedAt?: number;
+  userId?: string;
 }
 
 export enum TransactionType {

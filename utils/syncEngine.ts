@@ -27,25 +27,8 @@ class SyncEngine {
   }
 
   public async processQueue() {
-    if (this.isRunning || !checkOnlineStatus()) return;
-    
-    // Check if Supabase is actually configured before trying to sync
-    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-    const supabaseKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    if (!supabaseUrl || !supabaseKey) return;
-
-    this.isRunning = true;
-    try {
-      const items = peekSyncQueue(10); // Process batch of 10
-      
-      for (const item of items) {
-        await this.syncItem(item);
-      }
-    } catch (err) {
-      console.error('[SyncEngine] Erreur globale lors de la synchronisation:', err);
-    } finally {
-      this.isRunning = false;
-    }
+    // Synchronisation Cloud désactivée pour la version MVP 100% locale
+    return;
   }
 
   private async syncItem(item: SyncQueueItem) {

@@ -1,7 +1,5 @@
 
 import React, { useMemo, useRef } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -75,26 +73,13 @@ const Dashboard: React.FC = () => {
     const fileName = `${t('dashboard.export')}_${new Date().toISOString().slice(0, 10)}.json`;
     const jsonString = JSON.stringify(allData, null, 2);
 
-    if (Capacitor.isNativePlatform()) {
-      try {
-        await Filesystem.writeFile({
-          path: fileName,
-          data: jsonString,
-          directory: Directory.Documents,
-        });
-        alert(`Sauvegarde réussie dans les Documents : ${fileName}`);
-      } catch (error) {
-        console.error('Error saving file', error);
-        alert('Erreur lors de la sauvegarde sur l\'appareil. Vérifiez les permissions.');
-      }
-    } else {
-      const jsonBlob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(jsonBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-    }
+    // Web-only export
+    const jsonBlob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(jsonBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
   };
 
   const applyImport = (content: Record<string, unknown>) => {
@@ -308,4 +293,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;

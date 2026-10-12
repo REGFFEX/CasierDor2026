@@ -25,7 +25,7 @@ import PhoneInput from '../components/PhoneInput';
 import { SUPPORTED_CURRENCIES } from '../constants';
 import RecoverySecurityOptions from '../components/RecoverySecurityOptions';
 import { syncRegisterDataToStore } from '../utils/registerDataSync';
-import AuthLayout from '../components/auth/AuthLayout';
+import AuthShell from '../components/auth/AuthShell';
 import AuthCrystalButton from '../components/auth/AuthCrystalButton';
 import WizardStepper, { type WizardStep } from '../components/auth/WizardStepper';
 
@@ -39,14 +39,6 @@ const pickImage = (onPick: (dataUrl: string) => void) => {
   input.onchange = (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    
-    // Validation de la taille de l'image (20MB max)
-    const MAX_SIZE = 20 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      alert(`L'image ne doit pas dépasser 20MB. Taille actuelle: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      return;
-    }
-    
     const reader = new FileReader();
     reader.onload = (re) => onPick(re.target?.result as string);
     reader.readAsDataURL(file);
@@ -100,6 +92,11 @@ const RegisterPage: React.FC = () => {
   }, [appCountry]);
 
   const mapRegisterErrors = (msg: string): string => {
+    // Si le message est une clé i18n, on la traduit d'abord
+    const translated = t(msg);
+    const isTranslated = translated !== msg; // la clé a été résolue
+    const resolved = isTranslated ? translated : msg;
+
     const codeMap: Record<string, string> = {
       AUTH_ERROR_TERMS: t('auth.errorTerms'),
       AUTH_ERROR_COMPANY: t('auth.errorCompanyRequired'),
@@ -111,7 +108,7 @@ const RegisterPage: React.FC = () => {
       'Les mots de passe ne correspondent pas': t('auth.passwordsDoNotMatch'),
       "L'adresse email n'est pas valide": t('auth.errorEmail'),
     };
-    return msg.split(', ').map((p) => codeMap[p.trim()] || p.trim()).join(' · ');
+    return resolved.split(', ').map((p) => codeMap[p.trim()] || p.trim()).join(' · ');
   };
 
   const steps: WizardStep[] = useMemo(
@@ -236,8 +233,9 @@ const RegisterPage: React.FC = () => {
       } else {
         setError(mapRegisterErrors(response.message || t('auth.registerError')));
       }
-    } catch {
-      setError(t('auth.registerError'));
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setError(`Une erreur inattendue est survenue : ${detail}`);
     } finally {
       setIsLoading(false);
     }
@@ -527,10 +525,7 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout
-      title={t('auth.createAccount')}
-      subtitle={t('auth.createAccountSubtitle')}
-    >
+    <AuthShell icon={<Building className="w-8 h-8" />} title={t('auth.register')} subtitle={t('auth.registerSubtitle')} maxWidth="lg">
       <WizardStepper steps={steps} currentIndex={step} />
 
       {error && (
@@ -564,14 +559,7 @@ const RegisterPage: React.FC = () => {
           </AuthCrystalButton>
         )}
       </div>
-
-      <div className="mt-6 text-center text-sm">
-        <span className="text-gray-600 dark:text-gray-400">{t('auth.alreadyHaveAccount')} </span>
-        <Link to="/login" className="text-blue-600 font-medium hover:underline">
-          {t('auth.login')}
-        </Link>
-      </div>
-    </AuthLayout>
+    </AuthShell>
   );
 };
 

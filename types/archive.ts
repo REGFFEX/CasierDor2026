@@ -32,6 +32,7 @@ export interface ArchiveMetadata {
   archivedAt: number;
   createdBy: string;
   isSynced: boolean;
+  _originalData?: any;
 }
 
 export interface ArchiveCategory {
