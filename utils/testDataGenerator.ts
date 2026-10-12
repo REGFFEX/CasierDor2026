@@ -142,7 +142,7 @@ async function generateStoreSettings(force: boolean) {
     publicPhone: '+242 05 555 1234',
     publicEmail: 'info@depotcentral.cg',
     responsibleName: 'Jean Dupont',
-    address: '45 Avenue de l'Indépendance, Brazzaville',
+    address: "45 Avenue de l'Indépendance, Brazzaville",
     language: 'fr',
     country: 'cg',
     enterpriseType: 'Société',
