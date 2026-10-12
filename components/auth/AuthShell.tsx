@@ -39,35 +39,23 @@ const AuthShell: React.FC<AuthShellProps> = ({
             </div>
           </div>
 
-          {/* Navigation des actions d'authentification */}
-          <nav className="flex flex-wrap justify-center gap-4 mb-8">
+          {/* Navigation des actions d'authentification — iOS segmented control */}
+          <nav className="ds-segmented mb-6">
             <Link
               to="/login"
-              style={{ width: '120px', height: '40px', borderRadius: '6px' }}
-              className={`flex items-center justify-center text-sm font-semibold transition-colors duration-200 shadow-sm
-                ${location.pathname === '/login' 
-                  ? 'bg-blue-600 text-white shadow-blue-500/30 ring-2 ring-blue-600 ring-offset-2 dark:ring-offset-slate-800' 
-                  : 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50'}`}
+              className={`ds-segmented-item ${location.pathname === '/login' ? 'active' : ''}`}
             >
               {t('auth.login')}
             </Link>
             <Link
               to="/register"
-              style={{ width: '120px', height: '40px', borderRadius: '6px' }}
-              className={`flex items-center justify-center text-sm font-semibold transition-colors duration-200 shadow-sm
-                ${location.pathname === '/register' 
-                  ? 'bg-green-600 text-white shadow-green-500/30 ring-2 ring-green-600 ring-offset-2 dark:ring-offset-slate-800' 
-                  : 'bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'}`}
+              className={`ds-segmented-item ${location.pathname === '/register' ? 'active' : ''}`}
             >
               {t('auth.register')}
             </Link>
             <Link
               to="/forgot-password"
-              style={{ width: '120px', height: '40px', borderRadius: '6px' }}
-              className={`flex items-center justify-center text-sm font-semibold transition-colors duration-200 shadow-sm
-                ${location.pathname === '/forgot-password' 
-                  ? 'bg-gray-600 text-white shadow-gray-500/30 ring-2 ring-gray-600 ring-offset-2 dark:ring-offset-slate-800' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'}`}
+              className={`ds-segmented-item ${location.pathname === '/forgot-password' ? 'active' : ''}`}
             >
               {t('auth.forgotPasswordShort')}
             </Link>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle, Key, Upload } from 'lucide-react';
 import { useLanguage } from '../utils/languageContext';
+import { useAuth } from '../utils/authContext';
+import { isSupabaseConfigured } from '../utils/supabaseClient';
 import AuthLanguageSelector from '../components/AuthLanguageSelector';
 import AuthShell from '../components/auth/AuthShell';
 import RecoverySecurityOptions from '../components/RecoverySecurityOptions';
@@ -15,7 +17,10 @@ import {
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { forgotPassword } = useAuth();
+  const supabaseAvailable = isSupabaseConfigured();
   const [method, setMethod] = useState<'email' | 'key'>('key');
+  const [email, setEmail] = useState('');
   const [recoveryKey, setRecoveryKey] = useState('');
   const [filePassword, setFilePassword] = useState('');
   const [pendingFileContent, setPendingFileContent] = useState<string | null>(null);
@@ -82,7 +87,16 @@ const ForgotPasswordPage: React.FC = () => {
 
     try {
       if (method === 'email') {
-        setError(t('auth.emailRecoveryDisabledHint'));
+        if (!supabaseAvailable) {
+          setError(t('auth.emailRecoveryDisabledHint'));
+          return;
+        }
+        const response = await forgotPassword({ email: email.toLowerCase().trim() });
+        if (response.success) {
+          setSuccess(response.message || t('auth.passwordResetSent'));
+        } else {
+          setError(response.message || t('error.system'));
+        }
         return;
       }
 
@@ -127,12 +141,13 @@ const ForgotPasswordPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setMethod('email')}
+              disabled={!supabaseAvailable}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center space-x-2 ${
                 method === 'email'
                   ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 opacity-60'
-              }`}
-              title={t('auth.emailRecoveryUnavailable')}
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              } ${!supabaseAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={supabaseAvailable ? '' : t('auth.emailRecoveryUnavailable')}
             >
               <Mail className="w-4 h-4" />
               <span>{t('auth.email')}</span>
@@ -155,10 +170,32 @@ const ForgotPasswordPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {method === 'email' ? (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
-                <p className="font-medium mb-1">{t('auth.emailRecoveryUnavailable')}</p>
-                <p>{t('auth.emailRecoveryDisabledHint')}</p>
-              </div>
+              !supabaseAvailable ? (
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+                  <p className="font-medium mb-1">{t('auth.emailRecoveryUnavailable')}</p>
+                  <p>{t('auth.emailRecoveryDisabledHint')}</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('auth.email')}
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                      placeholder={t('auth.emailPlaceholder')}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Un email de réinitialisation sera envoyé à cette adresse.
+                  </p>
+                </div>
+              )
             ) : (
               <div className="space-y-4">
                 <div>
@@ -241,7 +278,7 @@ const ForgotPasswordPage: React.FC = () => {
 
             <button
               type="submit"
-              disabled={isLoading || method === 'email'}
+              disabled={isLoading || (method === 'email' && !supabaseAvailable)}
               className="w-full text-white py-3 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
             >
               {isLoading ? t('status.loading') : t('button.validate')}

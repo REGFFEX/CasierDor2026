@@ -8,6 +8,7 @@ import { getStoreData, setStoreData, STORAGE_KEYS, DEFAULT_SETTINGS } from '../s
 import { checkLockout } from '../utils/securityUtils';
 import AuthShell from '../components/auth/AuthShell';
 import AuthCrystalButton from '../components/auth/AuthCrystalButton';
+import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 import { resolveCompanyProfile, getBusinessTypeLabel } from '../utils/companyProfile';
 import { isStorageConfigured } from '../utils/storageDirectory';
 
@@ -178,6 +179,10 @@ const LoginPage: React.FC = () => {
               {t('auth.login')}
             </AuthCrystalButton>
           </form>
+
+          <div className="mt-6">
+            <SocialAuthButtons />
+          </div>
 
           {settings.enableTestAccounts && (
             <div className="mt-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
