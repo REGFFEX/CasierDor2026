@@ -61,11 +61,6 @@ prisma/dev.db
 prisma/dev.db-journal
 
 # ==========================
-# Tauri
-# ==========================
-src-tauri/target/
-
-# ==========================
 # Capacitor
 # ==========================
 android/app/build/
