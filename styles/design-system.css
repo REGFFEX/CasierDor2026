@@ -13,11 +13,14 @@
   --c-brand-light:    #3B82F6;
   --c-brand-xlight:   #EFF6FF;
 
-  /* Neutres */
-  --c-bg:             #F5F7FF;
+  /* Neutres — iOS 15 Crystal */
+  --c-bg:             #EEF2FB;
   --c-surface:        #FFFFFF;
-  --c-surface-2:      #F0F4FF;
-  --c-border:         rgba(31, 79, 216, 0.10);
+  --c-surface-2:      #F8FAFC;
+  --c-border:         rgba(255, 255, 255, 0.50);
+  --c-glass:          rgba(255, 255, 255, 0.72);
+  --c-glass-border:   rgba(255, 255, 255, 0.55);
+  --c-glass-highlight: rgba(255, 255, 255, 0.95);
   --c-text:           #0F172A;
   --c-text-2:         #475569;
   --c-text-3:         #94A3B8;
@@ -145,8 +148,10 @@ body {
   min-height: 100dvh;
   background-color: var(--c-bg);
   background-image:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(31,79,216,0.08), transparent),
-    radial-gradient(ellipse 50% 40% at 100% 80%, rgba(59,130,246,0.06), transparent);
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(31,79,216,0.14), transparent),
+    radial-gradient(ellipse 60% 45% at 85% 15%, rgba(59,130,246,0.12), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 70%, rgba(99,102,241,0.10), transparent),
+    radial-gradient(ellipse 55% 45% at 0% 100%, rgba(168,85,247,0.08), transparent);
 }
 
 :root.dark .ds-app-bg {
@@ -159,21 +164,29 @@ body {
    CARTES CRYSTAL
 ═══════════════════════════════════════════════ */
 .ds-card {
-  background: linear-gradient(
-    135deg,
-    var(--c-surface) 0%,
-    color-mix(in srgb, var(--c-surface) 95%, var(--c-surface-2)) 100%
-  );
-  border: 1px solid var(--c-border);
+  background: var(--c-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--c-glass-border);
   border-radius: var(--r-xl);
   box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.80),
+    inset 1px 1px 0 var(--c-glass-highlight),
     inset -1px -1px 1px rgba(0, 0, 0, 0.02),
     var(--shadow-sm);
   transition: transform var(--dur-normal) var(--ease),
               box-shadow var(--dur-normal) var(--ease);
   position: relative;
   overflow: hidden;
+}
+
+.ds-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60%; height: 50%;
+  background: radial-gradient(ellipse at top left, rgba(255,255,255,0.22), transparent 70%);
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 :root.dark .ds-card {
@@ -184,15 +197,10 @@ body {
 }
 
 .ds-card-glass {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(255, 255, 255, 0.68) 50%,
-    rgba(255, 255, 255, 0.55) 100%
-  );
-  backdrop-filter: blur(var(--blur-md)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.60);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.50);
   border-radius: var(--r-xl);
   box-shadow:
     inset 1px 1px 1px rgba(255, 255, 255, 0.95),
@@ -269,10 +277,10 @@ body {
   display: flex;
   align-items: center;
   padding: 0 var(--sp-lg);
-  background: rgba(245, 247, 255, 0.80);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  border-bottom: 1px solid var(--c-border);
+  background: rgba(238, 242, 251, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.40);
 }
 
 :root.dark .ds-header {
@@ -288,11 +296,11 @@ body {
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(var(--blur-lg)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.50);
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.60);
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.50);
   padding-bottom: var(--nav-safe);
   height: calc(var(--nav-h) + var(--nav-safe));
   display: flex;
@@ -450,9 +458,11 @@ body {
 
 /* Secondaire */
 .ds-btn-secondary {
-  background: var(--c-surface);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
   color: var(--c-text-2);
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--c-glass-border);
   box-shadow: var(--shadow-xs);
 }
 
@@ -518,14 +528,17 @@ body {
   width: 100%;
   height: 48px;
   padding: 0 var(--sp-lg);
-  background: var(--c-surface);
-  border: 1.5px solid var(--c-border);
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1.5px solid var(--c-glass-border);
   border-radius: var(--r-md);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   color: var(--c-text);
   transition: border-color var(--dur-fast) var(--ease),
-              box-shadow var(--dur-fast) var(--ease);
+              box-shadow var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease);
   outline: none;
   appearance: none;
   -webkit-appearance: none;
@@ -958,4 +971,92 @@ body {
 :root.dark .text-gray-500    { color: var(--c-text-3) !important; }
 :root.dark .border-gray-200  { border-color: var(--c-border) !important; }
 :root.dark .border-gray-100  { border-color: var(--c-border) !important; }
+
+/* ═══════════════════════════════════════════════
+   iOS 15 CRYSTAL GLASS — OVERRIDES GLOBAUX
+   Applique le verre cristal transparent aux
+   cartes, inputs, boutons utilisant bg-white
+═══════════════════════════════════════════════ */
+
+/* Cartes et surfaces blanches → verre cristal */
+.bg-white {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* Les petits éléments ronds (boutons toggle, avatars) restent opaques */
+.bg-white.rounded-full,
+.bg-white[class*="rounded-full"] {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Surfaces gris clair → verre subtil */
+.bg-gray-50 {
+  background: rgba(248, 250, 252, 0.55) !important;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+/* Hover gris clair → verre subtil */
+.hover\:bg-gray-50:hover {
+  background: rgba(248, 250, 252, 0.50) !important;
+}
+
+/* Borders → plus transparents et cristallins */
+.border-gray-200,
+.border-gray-100 {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Dark mode glass */
+:root.dark .bg-white {
+  background: rgba(17, 24, 39, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+:root.dark .bg-white.rounded-full,
+:root.dark .bg-white[class*="rounded-full"] {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root.dark .bg-gray-50 {
+  background: rgba(26, 36, 56, 0.55) !important;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+:root.dark .border-gray-200,
+:root.dark .border-gray-100 {
+  border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+/* Inputs en verre cristal */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not(.ds-input) {
+  background: rgba(255, 255, 255, 0.60) !important;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+:root.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not(.ds-input) {
+  background: rgba(30, 41, 59, 0.60) !important;
+  border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+/* Boutons secondaires en verre */
+button.bg-white:not(.rounded-full):not([class*="rounded-full"]) {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+:root.dark button.bg-white:not(.rounded-full):not([class*="rounded-full"]) {
+  background: rgba(30, 41, 59, 0.65) !important;
+}
 
