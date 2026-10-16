@@ -1,7 +1,7 @@
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin } from 'lucide-react';
+import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin, List, Grid3x3, ChevronDown, ChevronUp, Grid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../utils/languageContext';
 import { formatDateTime } from '../utils/dateTimeUtils';
@@ -28,6 +28,8 @@ const Dashboard: React.FC = () => {
   const products = getStoreData<Product[]>(STORAGE_KEYS.PRODUCTS, []);
   const settings = getStoreData<StoreSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shortcutView, setShortcutView] = useState<'grid' | 'list'>('grid');
+  const [shortcutsExpanded, setShortcutsExpanded] = useState(false);
 
   const shortcutItems = useMemo(() => {
     const all = filterNavigationItems(getNavigationItems(t), settings.disabledModules);
@@ -183,27 +185,87 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Accès rapide */}
+      {/* Accès rapide — avec toggle de vue et plier/déplier */}
       {settings.showDashboardShortcuts !== false && shortcutItems.length > 0 && (
         <div className="ds-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <LayoutGrid className="w-4 h-4 text-[var(--c-brand)]" />
-            <h2 className="font-bold text-[var(--c-text)] text-base">{t('dashboard.shortcuts')}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setShortcutsExpanded(!shortcutsExpanded)}
+              className="flex items-center gap-2 hover:bg-[var(--c-surface-2)] rounded-xl px-2 py-1 transition-all"
+            >
+              <LayoutGrid className="w-4 h-4 text-[var(--c-brand)]" />
+              <h2 className="font-bold text-[var(--c-text)] text-base">{t('dashboard.shortcuts')}</h2>
+              {shortcutsExpanded ? <ChevronUp className="w-4 h-4 text-[var(--c-text-3)]" /> : <ChevronDown className="w-4 h-4 text-[var(--c-text-3)]" />}
+            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setShortcutView('grid')}
+                className={`p-2 rounded-xl transition-all ${shortcutView === 'grid' ? 'bg-[var(--c-brand)] text-white' : 'text-[var(--c-text-3)] hover:bg-[var(--c-surface-2)]'}`}
+                title="Vue grille"
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShortcutView('list')}
+                className={`p-2 rounded-xl transition-all ${shortcutView === 'list' ? 'bg-[var(--c-brand)] text-white' : 'text-[var(--c-text-3)] hover:bg-[var(--c-surface-2)]'}`}
+                title="Vue liste"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {shortcutItems.map((item) => (
-              <Link key={item.path} to={item.path}
-                className="ds-card-interactive flex flex-col items-center gap-2 p-3 rounded-[var(--r-lg)] bg-[var(--c-surface-2)] hover:bg-[var(--c-brand-xlight)] group transition-all">
-                <div className="text-[var(--c-brand)] group-hover:scale-110 transition-transform">{item.icon}</div>
-                <span className="text-[10px] font-bold text-[var(--c-text-2)] group-hover:text-[var(--c-brand)] text-center uppercase leading-tight">{item.label}</span>
-              </Link>
-            ))}
-          </div>
+
+          {!shortcutsExpanded ? null : shortcutView === 'grid' ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {shortcutItems.map((item) => (
+                <Link key={item.path} to={item.path}
+                  className="ds-card-interactive flex flex-col items-center gap-2 p-3 rounded-[var(--r-lg)] bg-[var(--c-surface-2)] hover:bg-[var(--c-brand-xlight)] group transition-all">
+                  <div className="text-[var(--c-brand)] group-hover:scale-110 transition-transform">{item.icon}</div>
+                  <span className="text-[10px] font-bold text-[var(--c-text-2)] group-hover:text-[var(--c-brand)] text-center uppercase leading-tight">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {shortcutItems.map((item) => (
+                <Link key={item.path} to={item.path}
+                  className="ds-list-item hover:bg-[var(--c-brand-xlight)] group transition-all">
+                  <div className="text-[var(--c-brand)] group-hover:scale-110 transition-transform">{item.icon}</div>
+                  <span className="text-sm font-semibold text-[var(--c-text-2)] group-hover:text-[var(--c-brand)] flex-1">{item.label}</span>
+                  <ChevronRight className="w-4 h-4 text-[var(--c-text-3)]" />
+                </Link>
+              ))}
+            </div>
+          )}
           {location.state?.moduleDisabled && (
             <p className="mt-3 ds-alert ds-alert-warning text-xs">{t('modules.routeDisabled')}</p>
           )}
         </div>
       )}
+
+      {/* Tous les accès — bloc compact d'icônes uniquement */}
+      <div className="ds-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Grid className="w-4 h-4 text-[var(--c-brand)]" />
+          <h2 className="font-bold text-[var(--c-text)] text-sm">Tous les accès</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {filterNavigationItems(getNavigationItems(t), settings.disabledModules)
+            .filter(i => i.id !== 'dashboard')
+            .map((item) => {
+              const active = location.pathname === item.path;
+              return (
+                <Link key={item.path} to={item.path}
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-90 ${
+                    active ? 'bg-[var(--c-brand)] text-white shadow-md' : 'bg-[var(--c-surface-2)] text-[var(--c-text-2)] hover:bg-[var(--c-brand-xlight)] hover:text-[var(--c-brand)]'
+                  }`}
+                  title={item.label}>
+                  {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement<any>, { className: 'w-5 h-5' }) : item.icon}
+                </Link>
+              );
+            })}
+        </div>
+      </div>
 
       {/* Stats cards */}
       <div className="ds-grid-stats">

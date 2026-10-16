@@ -565,7 +565,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </span>
             </div>
           </div>
-          <SyncStatusBar compact={screenWidth < 400} />
+          <div className="flex items-center gap-3">
+            <SyncStatusBar compact={screenWidth < 400} />
+            {/* User profile avatar */}
+            <button
+              onClick={() => navigate('/settings')}
+              className="w-9 h-9 rounded-full bg-[var(--c-brand-xlight)] flex items-center justify-center text-[var(--c-brand)] border border-[var(--c-brand)]/20 active:scale-95 transition-all flex-shrink-0"
+              title={authState.user?.email || t('nav.settings')}
+            >
+              {authState.user?.user_metadata?.avatar_url ? (
+                <img src={authState.user.user_metadata.avatar_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold uppercase">
+                  {(authState.user?.email?.[0] || settings.adminName?.[0] || 'U').toUpperCase()}
+                </span>
+              )}
+            </button>
+          </div>
         </header>
 
         <main
