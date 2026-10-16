@@ -967,6 +967,61 @@ export class AuthService {
     }
   }
 
+  // Changer le mot de passe (utilisateur connecté)
+  async changePassword(currentPassword: string, newPassword: string): Promise<AuthResponse> {
+    try {
+      if (!this.currentUser) {
+        return { success: false, message: 'Vous devez être connecté' };
+      }
+
+      if (newPassword.length < AUTH_VALIDATION_RULES.PASSWORD_MIN_LENGTH) {
+        return { success: false, message: AUTH_ERROR_MESSAGES.WEAK_PASSWORD };
+      }
+
+      if (isSupabaseConfigured()) {
+        // Vérifier le mot de passe actuel en réauthentifiant
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: this.currentUser.email,
+          password: currentPassword,
+        });
+        if (signInError) {
+          return { success: false, message: 'Mot de passe actuel incorrect' };
+        }
+        // Mettre à jour le mot de passe
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+        if (updateError) {
+          return { success: false, message: updateError.message };
+        }
+        return { success: true, message: 'Mot de passe modifié avec succès' };
+      }
+
+      // Mode local
+      const user = this.db.findUserByEmail(this.currentUser.email);
+      if (!user || !user.password) {
+        return { success: false, message: AUTH_ERROR_MESSAGES.USER_NOT_FOUND };
+      }
+      const valid = await this.db.verifyPassword(currentPassword, user.password);
+      if (!valid) {
+        return { success: false, message: 'Mot de passe actuel incorrect' };
+      }
+      const hashed = await this.db.hashPassword(newPassword);
+      const updated = this.db.updateUser(user.id, { password: hashed });
+      if (!updated) {
+        return { success: false, message: AUTH_ERROR_MESSAGES.NETWORK_ERROR };
+      }
+      this.saveCurrentUser(updated);
+      return { success: true, message: 'Mot de passe modifié avec succès' };
+    } catch (error) {
+      return {
+        success: false,
+        message: AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
+      };
+    }
+  }
+
   // Mettre à jour le profil
   async updateProfile(userId: string, data: UpdateProfileData): Promise<AuthResponse> {
     try {

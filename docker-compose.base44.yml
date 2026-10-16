@@ -8,6 +8,8 @@ services:
     environment:
       - BASE44_PREVIEW_MODE=${BASE44_PREVIEW_MODE:-0}
       - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=${__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS:-}
+    env_file:
+      - /run/base44/app.env
     volumes:
       - .:/app
       - /app/node_modules

@@ -75,7 +75,7 @@ const PermissionsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase">Connexion</p>
-              <p className="text-2xl font-black text-gray-900 mt-2">{isOnline ? '🌐 En ligne' : '📴 Hors-ligne'}</p>
+              <p className="text-2xl font-black text-gray-900 mt-2">{isOnline ? 'En ligne' : 'Hors-ligne'}</p>
             </div>
             <Activity className={`w-8 h-8 ${isOnline ? 'text-blue-600' : 'text-amber-600'}`} />
           </div>
@@ -89,7 +89,7 @@ const PermissionsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase">Mode</p>
-              <p className="text-2xl font-black text-gray-900 mt-2">{isOfflineMode() ? '💾 Hors-ligne' : '☁️ Cloud'}</p>
+              <p className="text-2xl font-black text-gray-900 mt-2">{isOfflineMode() ? 'Hors-ligne' : 'Cloud'}</p>
             </div>
             <Shield className={`w-8 h-8 ${isOfflineMode() ? 'text-amber-600' : 'text-green-600'}`} />
           </div>
@@ -108,7 +108,7 @@ const PermissionsPage: React.FC = () => {
             </div>
             {storageInfo.percentage > 80 && (
               <div className="mt-3 p-2 bg-red-100 rounded-lg">
-                <p className="text-[10px] text-red-700 font-bold">⚠️ Stockage presque plein</p>
+                <p className="text-[10px] text-red-700 font-bold">Stockage presque plein</p>
               </div>
             )}
           </div>

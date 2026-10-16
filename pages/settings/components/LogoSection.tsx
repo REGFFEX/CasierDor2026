@@ -3,6 +3,7 @@ import { Image, ChevronDown, X } from 'lucide-react';
 import { StoreSettings } from '../../../types';
 import { useLanguage } from '../../../utils/languageContext';
 import { requestMediaPermission } from '../../../utils/permissionManager';
+import { compressImage } from '../../../utils/imageCompression';
 
 interface LogoSectionProps {
   settings: StoreSettings;
@@ -15,7 +16,7 @@ const LogoSection: React.FC<LogoSectionProps> = ({ settings, onChange }) => {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const buildingInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     fieldKey: 'logo' | 'buildingImage',
     fileNameKey?: 'logoFileName'
@@ -34,18 +35,14 @@ const LogoSection: React.FC<LogoSectionProps> = ({ settings, onChange }) => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
-      const updates: any = { [fieldKey]: base64 };
-      if (fileNameKey) updates[fileNameKey] = file.name;
-      
-      onChange({
-        ...settings,
-        ...updates
-      });
-    };
-    reader.readAsDataURL(file);
+    const base64 = await compressImage(file, 800, 0.85);
+    const updates: any = { [fieldKey]: base64 };
+    if (fileNameKey) updates[fileNameKey] = file.name;
+
+    onChange({
+      ...settings,
+      ...updates
+    });
     event.target.value = '';
   };
 
