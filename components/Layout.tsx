@@ -14,6 +14,7 @@ import { performFullBackup } from '../utils/backupUtils';
 import CompanyLogo from './CompanyLogo';
 import { useSidebar } from '../utils/sidebarContext';
 import SyncStatusBar from './design-system/SyncStatusBar';
+import FloatingAccessButton from './FloatingAccessButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -720,6 +721,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       )}
+      <FloatingAccessButton />
     </div>
   );
 };

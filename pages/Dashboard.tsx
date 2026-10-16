@@ -1,7 +1,7 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin, List, Grid3x3, ChevronDown, ChevronUp, Grid } from 'lucide-react';
+import { ShoppingCart, Package, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, Download, UploadCloud, LayoutGrid, CloudSync, Wifi, Database, MapPin, List, Grid3x3, ChevronDown, ChevronUp, ChevronRight, Grid, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../utils/languageContext';
 import { formatDateTime } from '../utils/dateTimeUtils';

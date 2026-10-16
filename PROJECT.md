@@ -13,6 +13,9 @@
 - [x] **Dashboard — Bloc "Tous les accès"** — Icônes compactes, accès direct à tous les modules
 - [x] **Header — Photo de profil utilisateur** — Avatar utilisateur affiché à côté du logo entreprise
 - [x] **Remplacement des emojis par de vraies icônes** (Lucide) — NewSale, PermissionsPage, SettingsPage nettoyés
+- [x] **Fix Accès rapide** — ChevronRight manquant importé, page blanche en vue liste corrigée
+- [x] **Bouton flottant "Tous les accès"** — Bouton rond déplageable, ouvre le panneau d'accès rapide depuis n'importe quelle page
+- [x] **Taille des images augmentée** — RegisterPage (logo, bâtiment, avatar) + compression automatique (800px max, 85% qualité) pour localStorage
 
 ---
 
@@ -90,7 +93,23 @@
 
 ---
 
-## 📌 À faire — Priorité 6 (Polish)
+## 📌 À faire — Priorité 6 (Logistique & Processus automatisé)
+
+- [ ] **Analyse et automatisation du processus produit → réapprovisionnement → caisse**
+  - [ ] Comprendre le flux complet: création produit → vente → réapprovisionnement → comptabilité
+  - [ ] Quand un produit est créé, lier automatiquement au réapprovisionnement (créer un réapprovisionnement en attente de confirmation)
+  - [ ] Quand le stock augmente (réapprovisionnement), confirmer que l'argent a bien été dépensé
+  - [ ] Semi-automatiser: ne pas juste créer un produit, mais suivre toute la chaîne financière
+  - [ ] Quand un produit est presque fini (stock critique), proposer le réapprovisionnement
+
+- [ ] **Module Gestion de Caisse (intégré à la Comptabilité)**
+  - [ ] Espace comptabilité + espace gestion de caisse dans le même module
+  - [ ] Bascule entre les deux vues (quand l'un apparaît, l'autre disparaît)
+  - [ ] Suivi des entrées/sorties d'argent (caisse physique)
+  - [ ] Lien avec les ventes (entrées) et réapprovisionnements (sorties)
+  - [ ] Rapport de caisse quotidien / hebdomadaire
+
+## 📌 À faire — Priorité 7 (Polish)
 
 - [ ] Vérifier le rendu dark mode (effet glass)
 - [ ] Vérifier le layout desktop
