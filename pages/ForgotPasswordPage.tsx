@@ -6,6 +6,7 @@ import { useAuth } from '../utils/authContext';
 import { isSupabaseConfigured } from '../utils/supabaseClient';
 import AuthLanguageSelector from '../components/AuthLanguageSelector';
 import AuthShell from '../components/auth/AuthShell';
+import AuthCrystalButton from '../components/auth/AuthCrystalButton';
 import RecoverySecurityOptions from '../components/RecoverySecurityOptions';
 import KeyFilePasswordFields from '../components/KeyFilePasswordFields';
 import {
@@ -186,7 +187,7 @@ const ForgotPasswordPage: React.FC = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                      className="auth-input pl-11"
                       placeholder={t('auth.emailPlaceholder')}
                       required
                     />
@@ -208,7 +209,7 @@ const ForgotPasswordPage: React.FC = () => {
                       type="text"
                       value={recoveryKey}
                       onChange={(e) => setRecoveryKey(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white font-mono text-sm"
+                      className="auth-input pl-11 font-mono text-sm"
                       placeholder={t('auth.recoveryKeyPlaceholder')}
                       required={method === 'key'}
                       autoComplete="off"
@@ -276,13 +277,9 @@ const ForgotPasswordPage: React.FC = () => {
 
             <RecoverySecurityOptions compact />
 
-            <button
-              type="submit"
-              disabled={isLoading || (method === 'email' && !supabaseAvailable)}
-              className="w-full text-white py-3 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-            >
-              {isLoading ? t('status.loading') : t('button.validate')}
-            </button>
+            <AuthCrystalButton type="submit" loading={isLoading} disabled={method === 'email' && !supabaseAvailable}>
+              {t('button.validate')}
+            </AuthCrystalButton>
           </form>
     </AuthShell>
   );

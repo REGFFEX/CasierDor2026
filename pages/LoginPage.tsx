@@ -102,33 +102,33 @@ const LoginPage: React.FC = () => {
     >
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-3 mt-0.5 flex-shrink-0" />
+            <div className="mb-5 p-4 rounded-2xl bg-red-50/80 dark:bg-red-900/20 border border-red-200/60 dark:border-red-800/40 backdrop-blur-sm flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
               <span className="text-red-700 dark:text-red-300 text-sm">{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-start">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+            <div className="mb-5 p-4 rounded-2xl bg-green-50/80 dark:bg-green-900/20 border border-green-200/60 dark:border-green-800/40 backdrop-blur-sm flex items-start">
+              <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
               <span className="text-green-700 dark:text-green-300 text-sm">{success}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-semibold text-[var(--c-text-2)] mb-2">
                 {t('auth.email')}
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-[var(--c-text-3)]" />
                 </div>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-white"
+                  className="auth-input pl-11"
                   placeholder={t('auth.emailPlaceholder')}
                   required
                 />
@@ -136,25 +136,25 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-semibold text-[var(--c-text-2)] mb-2">
                 {t('auth.password')}
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-[var(--c-text-3)]" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-white"
+                  className="auth-input pl-11 pr-11"
                   placeholder={t('auth.passwordPlaceholder')}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--c-text-3)] hover:text-[var(--c-text)]"
                   aria-label={t('auth.password')}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -162,15 +162,15 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-center pt-1">
               <input
                 type="checkbox"
                 id="rememberMe"
                 checked={formData.rememberMe}
                 onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="auth-checkbox"
               />
-              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+              <label htmlFor="rememberMe" className="ml-2.5 text-sm text-[var(--c-text-2)]">
                 {t('auth.rememberMe')}
               </label>
             </div>

@@ -47,7 +47,7 @@ const pickImage = (onPick: (dataUrl: string) => void) => {
 };
 
 const inputClass =
-  'w-full px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl dark:bg-slate-700/80 dark:text-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all';
+  'auth-input';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
