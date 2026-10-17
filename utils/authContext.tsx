@@ -124,6 +124,22 @@ interface AuthContextType {
   state: AuthState;
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
   register: (data: RegisterData) => Promise<AuthResponse>;
+  completeGoogleRegistration: (data: Partial<RegisterData> & {
+    companyName: string;
+    enterpriseType?: string;
+    activityType?: string;
+    customEnterpriseType?: string;
+    customActivityType?: string;
+    publicEmail?: string;
+    publicPhone?: string;
+    publicPhones?: string[];
+    address?: string;
+    currency?: string;
+    recoveryEmail?: string;
+    logo?: string;
+    buildingImage?: string;
+    avatar?: string;
+  }) => Promise<AuthResponse>;
   logout: () => Promise<AuthResponse>;
   forgotPassword: (data: ForgotPasswordData) => Promise<AuthResponse>;
   resetPassword: (data: ResetPasswordData) => Promise<AuthResponse>;
@@ -286,6 +302,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const completeGoogleRegistration = async (data: Parameters<typeof authService.completeGoogleRegistration>[0]): Promise<AuthResponse> => {
+    dispatch({ type: 'AUTH_START' });
+
+    try {
+      const response = await authService.completeGoogleRegistration(data);
+
+      if (response.success && response.user) {
+        dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
+      } else {
+        dispatch({ type: 'AUTH_FAILURE', payload: response.message });
+      }
+
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur d\'inscription Google';
+      dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
+      return { success: false, message: errorMessage };
+    }
+  };
+
   const logout = async (): Promise<AuthResponse> => {
     dispatch({ type: 'AUTH_START' });
 
@@ -386,6 +422,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     state,
     login,
     register,
+    completeGoogleRegistration,
     logout,
     forgotPassword,
     resetPassword,

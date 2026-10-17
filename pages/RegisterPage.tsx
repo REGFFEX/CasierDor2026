@@ -28,6 +28,8 @@ import { syncRegisterDataToStore } from '../utils/registerDataSync';
 import AuthShell from '../components/auth/AuthShell';
 import AuthCrystalButton from '../components/auth/AuthCrystalButton';
 import WizardStepper, { type WizardStep } from '../components/auth/WizardStepper';
+import GoogleRegisterButton from '../components/auth/GoogleRegisterButton';
+import { supabase } from '../utils/supabaseClient';
 
 const MAX_PUBLIC_PHONES = 3;
 const MIN_PUBLIC_PHONES = 1;
@@ -51,9 +53,12 @@ const inputClass =
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, completeGoogleRegistration } = useAuth();
   const { t, country: appCountry } = useLanguage();
   const [step, setStep] = useState(0);
+  const [googleMode, setGoogleMode] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [useSameEmail, setUseSameEmail] = useState(true);
   const [formData, setFormData] = useState<RegisterData>({
     firstName: '',
     lastName: '',
@@ -91,6 +96,34 @@ const RegisterPage: React.FC = () => {
     setPersonalDialCode(dial);
   }, [appCountry]);
 
+  // Détecter le retour d'OAuth Google pour pré-remplir l'inscription
+  useEffect(() => {
+    const checkGoogleRegistration = async () => {
+      if (sessionStorage.getItem('google_register_pending') !== 'true') return;
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        sessionStorage.removeItem('google_register_pending');
+        return;
+      }
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+      const nameParts = fullName.split(' ');
+      const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+      setGoogleEmail(user.email || '');
+      setAvatar(googleAvatar);
+      setFormData(prev => ({
+        ...prev,
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: user.email || '',
+        publicEmail: user.email || '',
+        avatar: googleAvatar || undefined,
+      }));
+      setGoogleMode(true);
+      sessionStorage.removeItem('google_register_pending');
+    };
+    checkGoogleRegistration();
+  }, []);
+
   const mapRegisterErrors = (msg: string): string => {
     // Si le message est une clé i18n, on la traduit d'abord
     const translated = t(msg);
@@ -111,7 +144,7 @@ const RegisterPage: React.FC = () => {
     return resolved.split(', ').map((p) => codeMap[p.trim()] || p.trim()).join(' · ');
   };
 
-  const steps: WizardStep[] = useMemo(
+  const allSteps: WizardStep[] = useMemo(
     () => [
       { id: 'enterprise', title: t('wizard.stepEnterprise'), hint: t('wizard.stepEnterpriseHint') },
       { id: 'contact', title: t('wizard.stepContact'), hint: t('wizard.stepContactHint') },
@@ -121,6 +154,8 @@ const RegisterPage: React.FC = () => {
     ],
     [t]
   );
+  // En mode Google, on saute les étapes "account" (infos perso) et "security" (mot de passe)
+  const steps = googleMode ? allSteps.slice(0, 3) : allSteps;
 
   const activityLabel = (type: string) => {
     const key = `enum.activityType.${type}`;
@@ -202,7 +237,8 @@ const RegisterPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    const err = validateStep(4);
+    const lastStep = googleMode ? 2 : 4;
+    const err = validateStep(lastStep);
     if (err) {
       setError(err);
       return;
@@ -214,24 +250,46 @@ const RegisterPage: React.FC = () => {
 
     try {
       const phones = (formData.publicPhones ?? []).map((p) => p.trim()).filter(Boolean);
-      const payload: RegisterData = {
-        ...formData,
-        avatar: avatar || undefined,
-        logo: logo || undefined,
-        buildingImage: buildingImage || undefined,
-        publicEmail: formData.publicEmail?.trim() || formData.email.trim(),
-        publicPhone: phones[0],
-        publicPhones: phones,
-      };
 
-      const response = await register(payload);
+      if (googleMode) {
+        const response = await completeGoogleRegistration({
+          ...formData,
+          companyName: formData.companyName || '',
+          avatar: avatar || formData.avatar || undefined,
+          logo: logo || undefined,
+          buildingImage: buildingImage || undefined,
+          publicEmail: useSameEmail ? googleEmail : (formData.publicEmail?.trim() || googleEmail),
+          publicPhone: phones[0],
+          publicPhones: phones,
+        });
 
-      if (response.success && response.user) {
-        syncRegisterDataToStore({ form: payload, user: response.user });
-        setSuccess(t('auth.registerSuccess'));
-        setTimeout(() => navigate('/storage-setup', { replace: true }), 1500);
+        if (response.success && response.user) {
+          syncRegisterDataToStore({ form: { ...formData, avatar: avatar || formData.avatar } as RegisterData, user: response.user });
+          setSuccess(t('auth.registerSuccess'));
+          setTimeout(() => navigate('/storage-setup', { replace: true }), 1500);
+        } else {
+          setError(mapRegisterErrors(response.message || t('auth.registerError')));
+        }
       } else {
-        setError(mapRegisterErrors(response.message || t('auth.registerError')));
+        const payload: RegisterData = {
+          ...formData,
+          avatar: avatar || undefined,
+          logo: logo || undefined,
+          buildingImage: buildingImage || undefined,
+          publicEmail: formData.publicEmail?.trim() || formData.email.trim(),
+          publicPhone: phones[0],
+          publicPhones: phones,
+        };
+
+        const response = await register(payload);
+
+        if (response.success && response.user) {
+          syncRegisterDataToStore({ form: payload, user: response.user });
+          setSuccess(t('auth.registerSuccess'));
+          setTimeout(() => navigate('/storage-setup', { replace: true }), 1500);
+        } else {
+          setError(mapRegisterErrors(response.message || t('auth.registerError')));
+        }
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
@@ -315,6 +373,61 @@ const RegisterPage: React.FC = () => {
       case 1:
         return (
           <div className="space-y-4">
+            {/* Choix de l'email de la boutique (mode Google uniquement) */}
+            {googleMode && (
+              <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/40 space-y-3">
+                <p className="text-sm font-semibold text-[var(--c-text)]">
+                  Email de contact de votre boutique
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setUseSameEmail(true); setFormData(prev => ({ ...prev, publicEmail: googleEmail })); }}
+                    className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium border transition-all ${
+                      useSameEmail
+                        ? 'bg-[var(--c-brand)] text-white border-[var(--c-brand)]'
+                        : 'bg-white/60 dark:bg-slate-700/40 text-[var(--c-text-2)] border-[var(--c-border)]'
+                    }`}
+                  >
+                    Utiliser {googleEmail}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseSameEmail(false)}
+                    className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium border transition-all ${
+                      !useSameEmail
+                        ? 'bg-[var(--c-brand)] text-white border-[var(--c-brand)]'
+                        : 'bg-white/60 dark:bg-slate-700/40 text-[var(--c-text-2)] border-[var(--c-border)]'
+                    }`}
+                  >
+                    Autre email
+                  </button>
+                </div>
+                {!useSameEmail && (
+                  <div className="space-y-2">
+                    <input
+                      type="email"
+                      value={formData.publicEmail}
+                      onChange={(e) => setFormData({ ...formData, publicEmail: e.target.value })}
+                      className="auth-input"
+                      placeholder="email.boutique@exemple.com"
+                    />
+                    <a
+                      href="https://mail.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[var(--c-brand)] hover:underline flex items-center gap-1"
+                    >
+                      <Mail className="w-3 h-3" />
+                      Créer un email Gmail pour votre boutique
+                    </a>
+                  </div>
+                )}
+                <p className="text-xs text-[var(--c-text-3)]">
+                  Nous recommandons d'utiliser un email dédié à votre boutique pour séparer vos contacts professionnels.
+                </p>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('auth.publicPhones')} ({t('auth.publicPhonesHint')})
@@ -526,6 +639,37 @@ const RegisterPage: React.FC = () => {
 
   return (
     <AuthShell icon={<Building className="w-8 h-8" />} title={t('auth.register')} subtitle={t('auth.registerSubtitle')} maxWidth="lg">
+      {/* Bouton d'inscription Google (sauf si déjà en mode Google) */}
+      {!googleMode && (
+        <div className="mb-6">
+          <GoogleRegisterButton />
+          <div className="flex items-center gap-3 py-3">
+            <div className="flex-1 h-px bg-[var(--c-border)]" />
+            <span className="text-xs text-[var(--c-text-3)]">ou inscrivez-vous manuellement</span>
+            <div className="flex-1 h-px bg-[var(--c-border)]" />
+          </div>
+        </div>
+      )}
+
+      {/* Indicateur mode Google */}
+      {googleMode && (
+        <div className="mb-4 p-3 rounded-2xl bg-blue-50/60 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/40 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-[var(--c-text)]">Inscription avec Google</p>
+            <p className="text-xs text-[var(--c-text-2)] truncate">{googleEmail}</p>
+          </div>
+          {avatar && <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover" />}
+        </div>
+      )}
+
       <WizardStepper steps={steps} currentIndex={step} />
 
       {error && (

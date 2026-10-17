@@ -1089,6 +1089,166 @@ export class AuthService {
     const users: User[] = (this.db as any).users || [];
     return users.find((u) => u.role === UserRole.ADMIN && u.active !== false) || users[0] || null;
   }
+
+  /**
+   * Complète l'inscription après Google OAuth.
+   * L'utilisateur est déjà authentifié via Supabase (Google) — on crée juste le profil app.
+   */
+  async completeGoogleRegistration(data: Partial<RegisterData> & {
+    companyName: string;
+    enterpriseType?: string;
+    activityType?: string;
+    customEnterpriseType?: string;
+    customActivityType?: string;
+    publicEmail?: string;
+    publicPhone?: string;
+    publicPhones?: string[];
+    address?: string;
+    currency?: string;
+    recoveryEmail?: string;
+    logo?: string;
+    buildingImage?: string;
+    avatar?: string;
+  }): Promise<AuthResponse> {
+    try {
+      const { data: { user: sbAuthUser }, error } = await supabase.auth.getUser();
+      if (error || !sbAuthUser) {
+        return { success: false, message: 'Session Google introuvable. Veuillez réessayer.' };
+      }
+
+      const fullName = sbAuthUser.user_metadata?.full_name || sbAuthUser.user_metadata?.name || '';
+      const nameParts = fullName.split(' ');
+      const firstName = data.firstName || nameParts[0] || 'Utilisateur';
+      const lastName = data.lastName || nameParts.slice(1).join(' ') || '';
+      const email = sbAuthUser.email || data.email || '';
+      const avatar = data.avatar || sbAuthUser.user_metadata?.avatar_url || sbAuthUser.user_metadata?.picture || undefined;
+
+      let newUser: User;
+
+      if (isSupabaseConfigured()) {
+        // Vérifier si le profil existe déjà
+        let sbUser = await fetchSupabaseUserProfile(sbAuthUser.id);
+        let tenantId: string;
+
+        if (!sbUser) {
+          const companyName = data.companyName || `${firstName} ${lastName}`.trim();
+          try {
+            const { data: newTenant, error: tenantError } = await supabase
+              .from('Tenant')
+              .insert({
+                name: companyName,
+                slug: companyName.toLowerCase().replace(/\s+/g, '-'),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              })
+              .select('id')
+              .single();
+
+            tenantId = newTenant?.id || sbAuthUser.id;
+            if (tenantError) {
+              console.error('[GoogleRegister] Tenant error:', tenantError);
+              tenantId = sbAuthUser.id;
+            }
+
+            const displayName = `${firstName} ${lastName}`.trim();
+            const { error: userError } = await supabase
+              .from('User')
+              .insert({
+                id: sbAuthUser.id,
+                tenantId,
+                email,
+                displayName,
+                role: UserRole.ADMIN,
+                storageAccountId: sbAuthUser.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+
+            if (userError) console.error('[GoogleRegister] User profile error:', userError);
+            sbUser = await fetchSupabaseUserProfile(sbAuthUser.id);
+          } catch (err) {
+            console.error('[GoogleRegister] Profile creation error:', err);
+            tenantId = sbAuthUser.id;
+          }
+        } else {
+          tenantId = sbUser.tenantId;
+        }
+
+        if (sbUser) {
+          newUser = mapSupabaseUserRow(sbUser);
+        } else {
+          newUser = {
+            id: sbAuthUser.id,
+            storageAccountId: sbAuthUser.id,
+            tenantId,
+            uniqueId: `USR-${sbAuthUser.id.slice(-4)}`,
+            name: `${firstName} ${lastName}`.trim(),
+            firstName,
+            lastName,
+            email,
+            displayName: `${firstName} ${lastName}`.trim(),
+            companyName: data.companyName,
+            enterpriseType: data.enterpriseType as any,
+            activityType: data.activityType as any,
+            avatar,
+            companyLogo: data.logo,
+            phone: data.publicPhone,
+            recoveryEmail: data.recoveryEmail,
+            role: UserRole.ADMIN,
+            active: true,
+            permissions: Object.values(Permission),
+            isOnline: true,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            preferences: { ...DEFAULT_USER_PREFERENCES },
+          };
+        }
+      } else {
+        // Mode local — créer un utilisateur local avec les données Google
+        const existingUser = this.db.findUserByEmail(email);
+        if (existingUser) {
+          // L'utilisateur existe déjà, on le connecte
+          this.saveCurrentUser(existingUser);
+          activateStorageForUser(existingUser);
+          return { success: true, user: existingUser, message: AUTH_SUCCESS_MESSAGES.REGISTER_SUCCESS };
+        }
+        newUser = await this.db.createUser({
+          firstName,
+          lastName,
+          email,
+          password: `google_${sbAuthUser.id.slice(0, 12)}`,
+          confirmPassword: `google_${sbAuthUser.id.slice(0, 12)}`,
+          companyName: data.companyName,
+          enterpriseType: data.enterpriseType as any,
+          activityType: data.activityType as any,
+          customEnterpriseType: data.customEnterpriseType,
+          customActivityType: data.customActivityType,
+          publicEmail: data.publicEmail,
+          publicPhone: data.publicPhone,
+          publicPhones: data.publicPhones,
+          address: data.address,
+          currency: data.currency,
+          recoveryEmail: data.recoveryEmail,
+          avatar,
+          logo: data.logo,
+          buildingImage: data.buildingImage,
+          acceptTerms: true,
+        } as RegisterData);
+      }
+
+      this.saveCurrentUser(newUser);
+      activateStorageForUser(newUser);
+
+      return {
+        success: true,
+        user: newUser,
+        message: AUTH_SUCCESS_MESSAGES.REGISTER_SUCCESS
+      };
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      return { success: false, message: `Erreur lors de la finalisation: ${detail}` };
+    }
+  }
 }
 
 // Instance singleton du service
