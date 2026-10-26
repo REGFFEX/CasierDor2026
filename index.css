@@ -36,6 +36,22 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Support pour les zones sécurisées mobiles (iOS / Android notched displays) */
+  :root {
+    --nav-safe: env(safe-area-inset-bottom, 0px);
+    --nav-h: 60px;
+  }
+
+  /* Minimum touch target size rule for touch accessibility */
+  .crystal-touch-target,
+  .ds-bottom-nav-item,
+  button,
+  a {
+    touch-action: manipulation;
   }
 
   @media print {

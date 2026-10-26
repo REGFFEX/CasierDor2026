@@ -5,10 +5,9 @@
  * Compte admin, produits, clients, ventes, paramètres de boutique
  */
 
-import { getStoreData, setStoreData, STORAGE_KEYS, DEFAULT_SETTINGS } from './store';
+import { getStoreData, setStoreData, STORAGE_KEYS, DEFAULT_SETTINGS, addActivity, LogAction } from '../store';
 import { User, UserRole, Permission, Client, Product, Sale, ProductType, ClientType, ContactMethod, StoreSettings } from '../types';
 import { hashPassword } from './cryptoVault';
-import { addActivity, LogAction } from './store';
 
 interface TestDataConfig {
   forceRegenerate?: boolean;

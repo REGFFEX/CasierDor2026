@@ -553,19 +553,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <button
               onClick={toggleSidebar}
-              className="crystal-touch-target flex items-center justify-center p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 rounded-xl active:scale-95 transition-all"
+              className="crystal-touch-target flex items-center justify-center p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-slate-800 rounded-xl active:scale-95 transition-all min-w-[44px] min-h-[44px]"
               aria-label={t('menu.open') || 'Menu'}
             >
               {sidebarState.mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div className="flex items-center space-x-2 min-w-0">
               <CompanyLogo src={company.logo} fallbackLetter={company.companyName?.[0] || 'C'} size="xs" />
-              <span className="font-bold text-base text-gray-800 dark:text-gray-100 truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
+              <span className="font-bold text-base text-gray-800 dark:text-gray-100 truncate max-w-[180px] sm:max-w-[300px] md:max-w-none">
                 {company.companyName || APP_NAME}
               </span>
             </div>
           </div>
-          <SyncStatusBar compact={screenWidth < 400} />
         </header>
 
         <main
@@ -577,8 +576,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {children}
           </div>
           {/* Footer */}
-          <footer className="py-4 px-6 text-center border-t border-[var(--c-border)] mt-auto no-print">
+          <footer className="py-4 px-6 border-t border-[var(--c-border)] mt-auto no-print flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <p className="text-xs text-[var(--c-text-3)]">{STANDARD_TEXTS.copyright}</p>
+            <SyncStatusBar compact={false} />
           </footer>
         </main>
       </div>
