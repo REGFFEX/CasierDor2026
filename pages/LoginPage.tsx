@@ -76,10 +76,12 @@ const LoginPage: React.FC = () => {
           }
         }, 1000);
       } else {
-        setError(response.message || t('auth.loginError'));
+        const errorKey = response.message || 'auth.loginError';
+        setError(t(errorKey));
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('auth.loginError'));
+      const errorKey = err instanceof Error ? err.message : 'auth.loginError';
+      setError(t(errorKey));
     } finally {
       setIsLoading(false);
     }
