@@ -36,12 +36,12 @@ const pickImage = (onPick: (dataUrl: string) => void) => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.onchange = (e) => {
+  input.onchange = async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (re) => onPick(re.target?.result as string);
-    reader.readAsDataURL(file);
+    const { compressImage } = await import('../utils/imageCompression');
+    const dataUrl = await compressImage(file, 800, 0.85);
+    onPick(dataUrl);
   };
   input.click();
 };
@@ -407,10 +407,10 @@ const RegisterPage: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 uppercase">{t('settings.logoLabel')}</label>
               <div className="flex items-center gap-3 mt-3">
                 {logo ? (
-                  <img src={logo} alt="" className="w-14 h-14 rounded-xl object-cover ring-2 ring-blue-100" />
+                  <img src={logo} alt="" className="w-24 h-24 rounded-2xl object-cover ring-2 ring-blue-100" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
-                    <Building className="w-7 h-7 text-gray-400" />
+                  <div className="w-24 h-24 rounded-2xl bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
+                    <Building className="w-10 h-10 text-gray-400" />
                   </div>
                 )}
                 <AuthCrystalButton variant="secondary" type="button" onClick={() => pickImage(setLogo)} className="!w-auto !py-2 !px-4 !text-xs">
@@ -422,10 +422,10 @@ const RegisterPage: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 uppercase">{t('auth.buildingPhoto')}</label>
               <div className="flex items-center gap-3 mt-3">
                 {buildingImage ? (
-                  <img src={buildingImage} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                  <img src={buildingImage} alt="" className="w-24 h-24 rounded-2xl object-cover" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
-                    <ImageIcon className="w-7 h-7 text-gray-400" />
+                  <div className="w-24 h-24 rounded-2xl bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
+                    <ImageIcon className="w-10 h-10 text-gray-400" />
                   </div>
                 )}
                 <AuthCrystalButton variant="secondary" type="button" onClick={() => pickImage(setBuildingImage)} className="!w-auto !py-2 !px-4 !text-xs">
@@ -442,10 +442,10 @@ const RegisterPage: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 dark:bg-slate-700/40">
               {avatar ? (
-                <img src={avatar} alt="" className="w-16 h-16 rounded-full object-cover ring-2 ring-blue-200" />
+                <img src={avatar} alt="" className="w-24 h-24 rounded-full object-cover ring-2 ring-blue-200" />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
-                  <User className="w-8 h-8 text-gray-400" />
+                <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
+                  <User className="w-10 h-10 text-gray-400" />
                 </div>
               )}
               <AuthCrystalButton variant="secondary" type="button" onClick={() => pickImage(setAvatar)} className="!w-auto !py-2 !px-4 !text-xs">

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Trash2, ShoppingCart, User, CheckCircle, ArrowLeft, Receipt as ReceiptIcon, Phone, Loader2, UserPlus, Save, Printer, ChevronDown, X, Info } from 'lucide-react';
+import { Search, Plus, Trash2, ShoppingCart, User, CheckCircle, CheckCircle2, Lock, ArrowLeft, Receipt as ReceiptIcon, Phone, Loader2, UserPlus, Save, Printer, ChevronDown, X, Info } from 'lucide-react';
 import ProductInfoModal from '../components/ProductInfoModal';
 import PageBackButton from '../components/PageBackButton';
 import { useNavigate } from 'react-router-dom';
@@ -64,7 +64,7 @@ const PAYMENT_METHOD_CONFIG = {
     apiEndpoint: 'https://api.blockcypher.com/v1/btc/main',
   },
   [PaymentMethod.OTHER]: {
-    icon: '⚙️',
+    icon: '⊕',
     color: 'bg-gray-50 border-gray-300 text-gray-700',
     btnActive: 'bg-gradient-to-br from-gray-500 via-gray-600 to-gray-700 border-gray-800 text-white shadow-[0_8px_0_gray-900,0_4px_8px_rgba(107,114,128,0.4),inset_-2px_-2px_4px_rgba(0,0,0,0.2),inset_2px_2px_4px_rgba(255,255,255,0.3)] active:shadow-[0_2px_0_gray-900,0_1px_2px_rgba(107,114,128,0.2),inset_-1px_-1px_2px_rgba(0,0,0,0.2),inset_1px_1px_2px_rgba(255,255,255,0.3)]',
     btnInactive: 'bg-gradient-to-br from-gray-100 to-gray-150 border-gray-300 text-gray-700 shadow-[0_4px_0_gray-200,0_2px_4px_rgba(107,114,128,0.2),inset_-1px_-1px_2px_rgba(0,0,0,0.1),inset_1px_1px_2px_rgba(255,255,255,0.5)] hover:shadow-[0_5px_0_gray-200,0_3px_5px_rgba(107,114,128,0.3)]',
@@ -989,13 +989,13 @@ const NewSale: React.FC = () => {
                       <p className="text-[11px] font-bold text-emerald-700 uppercase mb-2 tracking-wider">{t('sales.amountToCollect')}</p>
                       <p className="text-4xl font-black text-emerald-600 mb-1"><CurrencyDisplay amount={total} from="XAF" showFormat={false} /> XAF</p>
                       <div className="flex justify-center gap-2 text-[10px] text-emerald-700 font-medium mt-2">
-                        <span>💵 ${(total / EXCHANGE_RATES['USD']).toFixed(2)} USD</span>
+                        <span>${(total / EXCHANGE_RATES['USD']).toFixed(2)} USD</span>
                         <span>•</span>
                         <span>€ {(total / EXCHANGE_RATES['EUR']).toFixed(2)} EUR</span>
                       </div>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-300 p-4 rounded-xl text-center">
-                      <p className="text-[12px] font-bold text-emerald-700">✓ {t('sales.cashPayment')}</p>
+                      <p className="text-[12px] font-bold text-emerald-700 flex items-center justify-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {t('sales.cashPayment')}</p>
                       <p className="text-[10px] text-emerald-600 mt-2 leading-relaxed">{t('sales.cashInstructions')}</p>
                     </div>
                   </div>
@@ -1255,7 +1255,7 @@ const NewSale: React.FC = () => {
                     />
 
                     <div className="text-[10px] text-slate-800 bg-slate-100 border border-slate-300 p-3 rounded-lg font-medium">
-                      🔐 {t('sales.blockchainSecurity')} {selectedCrypto}
+                      <Lock className="w-3 h-3 inline mr-1" /> {t('sales.blockchainSecurity')} {selectedCrypto}
                     </div>
                     {cryptoError && <div className="text-[11px] font-bold text-red-700 text-center py-2 px-3 bg-red-100 rounded-lg border border-red-300">✕ {cryptoError}</div>}
                   </div>
